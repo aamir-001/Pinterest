@@ -1,5 +1,5 @@
 // userFunctions.js
-const pool = require('./db');
+const pool = require('../db');
 
 /**
  * Register a new user

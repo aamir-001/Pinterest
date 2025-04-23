@@ -1,5 +1,5 @@
 // friendFunctions.js
-const pool = require('./db');
+const pool = require('../db');
 
 /**
  * Send a friend request to another user

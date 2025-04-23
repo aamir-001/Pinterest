@@ -1,4 +1,4 @@
-const pool = require('./db');
+const pool = require('../db');
 
 /**
  * Add a like to a picture
