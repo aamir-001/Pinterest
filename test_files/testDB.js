@@ -1,7 +1,7 @@
-const pool = require('./db');
+const pool = require('../db');
 
 
-const { searchPicturesByTags } = require('./services/searchPictures');
+const { searchPicturesByTags } = require('../services/searchPictures');
 
 async function testSearch() {
   // Test with a single keyword
