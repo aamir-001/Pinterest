@@ -1,0 +1,37 @@
+<div class="stream-header">
+    <h2><%= stream.stream_name %></h2>
+    <p>Your collection of inspiration boards</p>
+</div>
+
+<div class="stream-options">
+    <a href="#" class="add-board-btn">+ Add Board</a>
+</div>
+
+<div class="boards-grid">
+    <% if (boards && boards.length > 0) { %>
+        <% boards.forEach(board => { %>
+            <a href="/boards/<%= board.board_id %>" class="board-card-link">
+                <div class="board-card">
+                    <div class="board-thumbnail">
+                        <span class="board-thumbnail-icon">📁</span>
+                    </div>
+                    <div class="board-info">
+                        <h4 class="board-name"><%= board.board_name %></h4>
+                        <div class="board-meta">
+                            <span><%= board.pin_count %> pins</span>
+                            <% if (board.user_id !== user.user_id) { %>
+                                <span>• By <%= board.username %></span>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        <% }) %>
+    <% } else { %>
+        <div class="empty-state">
+            <h3>No boards in this stream yet</h3>
+            <p>Add boards to this stream to get started</p>
+            <a href="#" class="add-board-btn">Add Your First Board</a>
+        </div>
+    <% } %>
+</div>

@@ -1,5 +1,6 @@
 // userFunctions.js
 const pool = require('../db');
+const bcrypt = require('bcrypt');
 
 /**
  * Register a new user
@@ -99,31 +100,46 @@ async function updateProfile(profileData) {
 
 /**
  * Get user by login credentials
- * @param {string} username - Username or email
- * @param {string} password_hash - Hashed password
+ * @param {string} email - Email
+ * @param {string} password - Plain text password
  * @returns {Promise<Object>} - User data if found
  */
-async function getUserByCredentials(username, password_hash) {
+async function getUserByCredentials(email, password) {
   const query = `
-    SELECT u.user_id, u.username, u.email, p.display_name, p.bio, p.profile_picture_url
+    SELECT u.user_id, u.username, u.email, u.password_hash, p.display_name, p.bio, p.profile_picture_url
     FROM Users u
     LEFT JOIN Profiles p ON u.user_id = p.user_id
-    WHERE (u.username = $1 OR u.email = $1) AND u.password_hash = $2
+    WHERE u.email = $1
   `;
   
   try {
-    const result = await pool.query(query, [username, password_hash]);
+    const result = await pool.query(query, [email]);
     
     if (result.rows.length === 0) {
       return {
         success: false,
-        message: 'Invalid credentials'
+        message: 'User not found'
       };
     }
     
+    const user = result.rows[0];
+    
+    // Compare the password with the hash
+    const passwordMatch = await bcrypt.compare(password, user.password_hash);
+    
+    if (!passwordMatch) {
+      return {
+        success: false,
+        message: 'Incorrect password'
+      };
+    }
+    
+    // Don't send password_hash back
+    delete user.password_hash;
+    
     return {
       success: true,
-      user: result.rows[0]
+      user: user
     };
   } catch (error) {
     return {
@@ -132,6 +148,7 @@ async function getUserByCredentials(username, password_hash) {
     };
   }
 }
+
 
 module.exports = {
   createUser,

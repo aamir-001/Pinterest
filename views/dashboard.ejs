@@ -1,0 +1,54 @@
+<div class="welcome-message">
+    <h2>Good morning, <%= user.username %>!</h2>
+    <p>Let's create something amazing today.</p>
+</div>
+
+<section class="streams-section">
+    <div class="section-header">
+        <h3>Your Follow Streams</h3>
+        <a href="/streams/create" class="create-stream-btn">+ Create Stream</a>
+    </div>
+
+    <!-- Streams Grid -->
+    <div class="streams-grid">
+        <% if (streams && streams.length > 0) { %>
+            <% streams.forEach(stream => { %>
+                <a href="/streams/<%= stream.stream_id %>" class="stream-card-link">
+                    <div class="stream-card">
+                        <div class="stream-thumbnail">
+                            <span class="stream-thumbnail-icon">📋</span>
+                        </div>
+                        <div class="stream-info">
+                            <h4 class="stream-name"><%= stream.stream_name %></h4>
+                            <div class="stream-meta">
+                                <span class="stream-count">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="3" y="3" width="7" height="7" rx="1"></rect>
+                                        <rect x="14" y="3" width="7" height="7" rx="1"></rect>
+                                        <rect x="14" y="14" width="7" height="7" rx="1"></rect>
+                                        <rect x="3" y="14" width="7" height="7" rx="1"></rect>
+                                    </svg>
+                                    0 boards <!-- placeholder for now -->
+                                </span>
+                                <span>•</span>
+                                <span>Just created</span> <!-- placeholder for now -->
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            <% }) %>
+        <% } else { %>
+            <div class="empty-state">
+                <h3>You don't have any follow streams yet!</h3>
+                <p>Create a follow stream to organize and track your favorite boards</p>
+                <a href="/streams/create" class="create-stream-btn">Create Your First Stream</a>
+            </div>
+        <% } %>
+
+        <% if (streamError) { %>
+            <div class="error-message">
+                <p><%= streamError %></p>
+            </div>
+        <% } %>
+    </div>
+</section>
