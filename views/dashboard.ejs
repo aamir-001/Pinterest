@@ -6,7 +6,7 @@
 <section class="streams-section">
     <div class="section-header">
         <h3>Your Follow Streams</h3>
-        <a href="/streams/create" class="create-stream-btn">+ Create Stream</a>
+        <a href="#" class="create-stream-btn">+ Create Stream</a>
     </div>
 
     <!-- Streams Grid -->
@@ -41,7 +41,7 @@
             <div class="empty-state">
                 <h3>You don't have any follow streams yet!</h3>
                 <p>Create a follow stream to organize and track your favorite boards</p>
-                <a href="/streams/create" class="create-stream-btn">Create Your First Stream</a>
+                <a href="#" class="create-stream-btn">Create Your First Stream</a>
             </div>
         <% } %>
 
@@ -52,3 +52,68 @@
         <% } %>
     </div>
 </section>
+
+<!-- Create Stream Modal -->
+<div id="createStreamModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Create follow stream</h3>
+            <span class="close-modal">&times;</span>
+        </div>
+        
+        <form id="createStreamForm" action="/streams/create" method="POST">
+            <div class="form-group">
+                <label for="streamName">Name</label>
+                <input type="text" id="streamName" name="stream_name" class="form-control" required placeholder="Like 'Design Inspiration' or 'Travel Ideas'">
+            </div>
+            
+            <div class="form-group">
+                <label for="streamDescription">Description (optional)</label>
+                <textarea id="streamDescription" name="description" class="form-control" rows="3" placeholder="What kind of content will you follow in this stream?"></textarea>
+            </div>
+            
+            <div class="form-actions">
+                <button type="button" class="btn-cancel" onclick="closeStreamModal()">Cancel</button>
+                <button type="submit" class="btn-create">Create</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Get the modal
+    const streamModal = document.getElementById('createStreamModal');
+    
+    // Get all buttons that open the modal
+    const createStreamBtns = document.querySelectorAll('.create-stream-btn');
+    
+    // Get the <span> element that closes the modal
+    const closeStreamBtn = streamModal.querySelector('.close-modal');
+    
+    // When the user clicks the button, open the modal 
+    createStreamBtns.forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            streamModal.style.display = "block";
+            document.body.style.overflow = "hidden"; // Prevent scrolling
+        });
+    });
+    
+    // When the user clicks on <span> (x), close the modal
+    closeStreamBtn.addEventListener('click', function() {
+        closeStreamModal();
+    });
+    
+    // When the user clicks anywhere outside of the modal, close it
+    window.addEventListener('click', function(event) {
+        if (event.target == streamModal) {
+            closeStreamModal();
+        }
+    });
+    
+    // Close modal function
+    function closeStreamModal() {
+        streamModal.style.display = "none";
+        document.body.style.overflow = "auto"; // Re-enable scrolling
+    }
+</script>

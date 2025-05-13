@@ -56,6 +56,8 @@ app.use('/profile', require('./routes/profile'));
 
 // Add to app.js
 app.use('/streams', require('./routes/streams'));
+// app.js
+app.use('/boards', require('./routes/boards'));
 
 // Start server
 const PORT = process.env.PORT || 3000;

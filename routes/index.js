@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { ensureAuthenticated, forwardAuthenticated } = require('../config/auth');
 const { getUserFollowStreams } = require('../services/dashboardStreamsFuntions');
-
+const { getUserBoards } = require('../services/libraryBoardManagementFunctions');
 
 // Home page (redirect if authenticated)
 router.get('/', forwardAuthenticated, (req, res) => {
@@ -36,13 +36,25 @@ router.get('/dashboard', ensureAuthenticated, async (req, res) => {
   }
 });
 
-// Library page - placeholder for now
-router.get('/library', ensureAuthenticated, (req, res) => {
-  res.render('library', {
-    user: req.user,
-    title: 'Library',
-    currentPage: 'library'
-  });
+// Library page
+router.get('/library', ensureAuthenticated, async (req, res) => {
+  try {
+
+    // Get user's boards
+    const boardsResult = await getUserBoards(req.user.user_id);
+    
+    res.render('library', {
+      user: req.user,
+      title: 'Your Library',
+      currentPage: 'library',
+      boards: boardsResult.success ? boardsResult.boards : [],
+      error: !boardsResult.success ? boardsResult.message : null
+    });
+  } catch (error) {
+    console.error('Library error:', error);
+    req.flash('error_msg', 'Failed to load library');
+    res.redirect('/dashboard');
+  }
 });
 
 // Profile page - placeholder for now
@@ -53,5 +65,7 @@ router.get('/profile', ensureAuthenticated, (req, res) => {
     currentPage: 'profile'
   });
 });
+
+
 
 module.exports = router;

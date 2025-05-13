@@ -1,0 +1,41 @@
+<div class="board-header">
+    <div class="board-title">
+        <h2><%= board.board_name %></h2>
+        <p><%= board.description %></p>
+    </div>
+    
+    <div class="board-actions">
+        <a href="#" class="add-pin-btn">+ Add Pin</a>
+        <% if (user.user_id === board.user_id) { %>
+            <button class="edit-board-btn">Edit</button>
+        <% } %>
+    </div>
+</div>
+
+<div class="pins-container">
+    <% if (pins && pins.length > 0) { %>
+        <div class="pins-grid">
+            <% pins.forEach(pin => { %>
+                <div class="pin-card">
+                    <div class="pin-image-container">
+                        <img src="<%= pin.system_url %>" alt="Pin" class="pin-image">
+                    </div>
+                    <div class="pin-info">
+                        <p class="pin-description"><%= pin.description %></p>
+                        <div class="pin-meta">
+                            <span><%= pin.like_count %> likes</span>
+                            <span><%= pin.comment_count %> comments</span>
+                        </div>
+                    </div>
+                </div>
+            <% }); %>
+        </div>
+    <% } else { %>
+        <div class="empty-board">
+            <img src="/api/placeholder/100/100" alt="Pin" class="empty-board-icon">
+            <h3>This board has no pins yet</h3>
+            <p>Add pins to populate your board</p>
+            <a href="#" class="add-pin-btn">Add Your First Pin</a>
+        </div>
+    <% } %>
+</div>

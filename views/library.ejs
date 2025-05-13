@@ -1,15 +1,117 @@
-<div class="welcome-message">
-    <h2>Your Library</h2>
-    <p>Manage your boards and pins</p>
-</div>
-
-<div class="content-grid">
-    <!-- Placeholder for boards -->
-    <div class="pin-item">
-        <img src="/api/placeholder/250/200" alt="Board" class="pin-image">
-        <div class="pin-info">
-            <div class="pin-title">Create your first board</div>
-            <div class="pin-board">• Click here to start pinning</div>
-        </div>
+<div class="library-header">
+    <div class="library-title">
+        <h2>Your Library</h2>
+        <p>Manage your boards and pins</p>
+    </div>
+    <div class="library-actions">
+        <a href="#" class="create-board-btn">+ Create Board</a>
     </div>
 </div>
+
+<div class="boards-container">
+    <% if (typeof boards !== 'undefined' && boards && boards.length > 0) { %>
+        <div class="boards-grid">
+            <% boards.forEach(board => { %>
+                <a href="/boards/<%= board.board_id %>" class="board-card-link">
+                    <div class="board-card">
+                        <div class="board-thumbnail">
+                            <span class="board-thumbnail-icon">📁</span>
+                        </div>
+                        <div class="board-info">
+                            <h4 class="board-name"><%= board.board_name %></h4>
+                            <div class="board-meta">
+                                <span><%= board.pin_count || 0 %> pins</span>
+                                <% if (board.friends_only_comments) { %>
+                                    <span title="Only friends can comment">👥</span>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            <% }); %>
+        </div>
+    <% } else { %>
+        <div class="empty-library">
+            <img src="/api/placeholder/100/100" alt="Board" class="empty-library-icon">
+            <h3>Create your first board</h3>
+            <p>Boards help you organize your pins by topic</p>
+            <a href="#" class="create-board-btn">Create Board</a>
+        </div>
+    <% } %>
+    
+    <% if (error) { %>
+        <div class="error-message">
+            <p><%= error %></p>
+        </div>
+    <% } %>
+</div>
+
+<!-- Create Board Modal -->
+<div id="createBoardModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Create board</h3>
+            <span class="close-modal">&times;</span>
+        </div>
+        
+        <form id="createBoardForm" action="/boards/create" method="POST">
+            <div class="form-group">
+                <label for="boardName">Name</label>
+                <input type="text" id="boardName" name="board_name" class="form-control" required placeholder="Like 'Places to Go' or 'Recipes to Make'">
+            </div>
+            
+            <div class="form-group">
+                <label for="boardDescription">Description</label>
+                <textarea id="boardDescription" name="description" class="form-control" rows="3" placeholder="What's your board about?"></textarea>
+            </div>
+            
+            <div class="form-group checkbox-group">
+                <input type="checkbox" id="friendsOnlyComments" name="friends_only_comments" value="true">
+                <label for="friendsOnlyComments">Only allow friends to comment</label>
+            </div>
+            
+            <div class="form-actions">
+                <button type="button" class="btn-cancel" onclick="closeModal()">Cancel</button>
+                <button type="submit" class="btn-create">Create</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Get the modal
+    const modal = document.getElementById('createBoardModal');
+    
+    // Get all buttons that open the modal (there could be multiple)
+    const createBtns = document.querySelectorAll('.create-board-btn');
+    
+    // Get the <span> element that closes the modal
+    const closeBtn = document.querySelector('.close-modal');
+    
+    // When the user clicks the button, open the modal 
+    createBtns.forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            modal.style.display = "block";
+            document.body.style.overflow = "hidden"; // Prevent scrolling
+        });
+    });
+    
+    // When the user clicks on <span> (x), close the modal
+    closeBtn.addEventListener('click', function() {
+        closeModal();
+    });
+    
+    // When the user clicks anywhere outside of the modal, close it
+    window.addEventListener('click', function(event) {
+        if (event.target == modal) {
+            closeModal();
+        }
+    });
+    
+    // Close modal function
+    function closeModal() {
+        modal.style.display = "none";
+        document.body.style.overflow = "auto"; // Re-enable scrolling
+    }
+</script>
