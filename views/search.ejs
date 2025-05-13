@@ -1,0 +1,121 @@
+<div class="search-container-page">
+    <div class="search-header">
+        <form action="/search" method="GET" class="search-form">
+            <input type="text" name="q" value="<%= query %>" class="search-input" placeholder="Search for pins, boards and more...">
+            <button type="submit" class="search-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+            </button>
+        </form>
+    </div>
+    
+    <% if (error) { %>
+        <div class="search-error">
+            <p><%= error %></p>
+        </div>
+    <% } else if (results && results.pins && results.pins.length > 0) { %>
+        <!-- Tag filters -->
+        <div class="tag-filters">
+            <div class="filter-scroll">
+                <a href="/search?q=<%= query %>&sort=<%= sortBy %>" class="tag-filter active">All</a>
+                <% results.relatedTags.forEach(tagObj => { %>
+                    <a href="/search?q=<%= tagObj.tag_name %>&sort=<%= sortBy %>" class="tag-filter">
+                        <%= tagObj.tag_name %> (<%= tagObj.pin_count %>)
+                    </a>
+                <% }); %>
+            </div>
+        </div>
+        
+        <!-- Sort options -->
+        <div class="sort-options">
+            <span>Sort by:</span>
+            <a href="/search?q=<%= query %>&sort=relevance" class="sort-option <%= sortBy === 'relevance' ? 'active' : '' %>">Relevance</a>
+            <a href="/search?q=<%= query %>&sort=likes" class="sort-option <%= sortBy === 'likes' ? 'active' : '' %>">Most Liked</a>
+            <a href="/search?q=<%= query %>&sort=time" class="sort-option <%= sortBy === 'time' ? 'active' : '' %>">Latest</a>
+        </div>
+        
+        <h2 class="search-results-title">Results for "<%= query %>"</h2>
+        
+        <!-- Pinterest-like masonry grid for search results -->
+        <div class="masonry-grid">
+            <% results.pins.forEach(pin => { %>
+                <div class="masonry-item">
+                    <div class="pin-card">
+                        <div class="pin-image-container">
+                            <a href="/pins/<%= pin.pin_id %>">
+                                <img src="<%= pin.system_url %>" alt="<%= pin.description %>" class="pin-image">
+                            </a>
+                        </div>
+                        <div class="pin-info">
+                            <p class="pin-description"><%= pin.description %></p>
+                            <div class="pin-meta">
+                                <a href="/boards/<%= pin.board_id %>" class="pin-board">
+                                    <%= pin.board_name %>
+                                </a>
+                                <a href="/users/<%= pin.user_id %>" class="pin-user">
+                                    <span class="user-icon">
+                                        <%= pin.username.charAt(0).toUpperCase() %>
+                                    </span>
+                                    <%= pin.username %>
+                                </a>
+                            </div>
+                            <div class="pin-tags">
+                                <% if (pin.tags) { %>
+                                    <% pin.tags.split(', ').slice(0, 3).forEach(tag => { %>
+                                        <a href="/search?q=<%= tag %>" class="pin-tag">#<%= tag %></a>
+                                    <% }); %>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <% }); %>
+        </div>
+    <% } else if (query) { %>
+        <div class="no-results">
+            <h2>No pins found for "<%= query %>"</h2>
+            <p>Try searching for something else or check out popular categories below</p>
+            <div class="popular-tags">
+                <a href="/search?q=travel" class="tag-button">Travel</a>
+                <a href="/search?q=food" class="tag-button">Food</a>
+                <a href="/search?q=design" class="tag-button">Design</a>
+                <a href="/search?q=fashion" class="tag-button">Fashion</a>
+                <a href="/search?q=cars" class="tag-button">Cars</a>
+                <a href="/search?q=art" class="tag-button">Art</a>
+            </div>
+        </div>
+    <% } else { %>
+        <div class="search-empty">
+            <h2>Discover something new</h2>
+            <p>Search for ideas, inspiration, or anything else</p>
+            <div class="category-grid">
+                <a href="/search?q=travel" class="category-card">
+                    <div class="category-image travel-bg"></div>
+                    <span>Travel</span>
+                </a>
+                <a href="/search?q=food" class="category-card">
+                    <div class="category-image food-bg"></div>
+                    <span>Food</span>
+                </a>
+                <a href="/search?q=design" class="category-card">
+                    <div class="category-image design-bg"></div>
+                    <span>Design</span>
+                </a>
+                <a href="/search?q=fashion" class="category-card">
+                    <div class="category-image fashion-bg"></div>
+                    <span>Fashion</span>
+                </a>
+                <a href="/search?q=cars" class="category-card">
+                    <div class="category-image cars-bg"></div>
+                    <span>Cars</span>
+                </a>
+                <a href="/search?q=technology" class="category-card">
+                    <div class="category-image tech-bg"></div>
+                    <span>Technology</span>
+                </a>
+            </div>
+        </div>
+    <% } %>
+</div>

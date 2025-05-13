@@ -937,6 +937,334 @@
         .close-modal:hover {
             color: #555;
         }
+
+        /* Search page styles */
+        .search-container-page {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding-bottom: 40px;
+        }
+
+        .search-header {
+            margin-bottom: 20px;
+        }
+
+        .search-form {
+            display: flex;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .search-input {
+            flex: 1;
+            height: 48px;
+            padding: 0 20px;
+            border: 2px solid #e9e9e9;
+            border-radius: 24px 0 0 24px;
+            font-size: 16px;
+            outline: none;
+        }
+
+        .search-input:focus {
+            border-color: #e60023;
+        }
+
+        .search-btn {
+            width: 60px;
+            height: 48px;
+            background: #e60023;
+            color: white;
+            border: none;
+            border-radius: 0 24px 24px 0;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .search-results-title {
+            font-size: 20px;
+            color: #333;
+            margin: 20px 0;
+        }
+
+        .tag-filters {
+            overflow-x: auto;
+            margin-bottom: 15px;
+            -ms-overflow-style: none;  /* Hide scrollbar in IE and Edge */
+            scrollbar-width: none;  /* Hide scrollbar in Firefox */
+        }
+
+        .tag-filters::-webkit-scrollbar {
+            display: none; /* Hide scrollbar in Chrome, Safari and Opera */
+        }
+
+        .filter-scroll {
+            display: flex;
+            gap: 10px;
+            padding: 10px 0;
+        }
+
+        .tag-filter {
+            padding: 8px 16px;
+            background: #f0f0f0;
+            color: #333;
+            border-radius: 20px;
+            text-decoration: none;
+            font-size: 14px;
+            transition: background-color 0.2s;
+            white-space: nowrap;
+        }
+
+        .tag-filter:hover {
+            background: #e0e0e0;
+        }
+
+        .tag-filter.active {
+            background: #e60023;
+            color: white;
+        }
+
+        .sort-options {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .sort-options span {
+            color: #666;
+        }
+
+        .sort-option {
+            color: #333;
+            text-decoration: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+        }
+
+        .sort-option:hover {
+            background: #f0f0f0;
+        }
+
+        .sort-option.active {
+            font-weight: bold;
+            color: #e60023;
+        }
+
+        /* Pinterest-like masonry grid */
+        .masonry-grid {
+            columns: 5 250px;
+            column-gap: 16px;
+        }
+
+        @media (max-width: 1200px) {
+            .masonry-grid {
+                columns: 4 250px;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .masonry-grid {
+                columns: 3 250px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .masonry-grid {
+                columns: 2 250px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .masonry-grid {
+                columns: 1 250px;
+            }
+        }
+
+        .masonry-item {
+            break-inside: avoid;
+            margin-bottom: 16px;
+        }
+
+        .pin-card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: box-shadow 0.3s;
+        }
+
+        .pin-card:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+
+        .pin-image-container {
+            overflow: hidden;
+        }
+
+        .pin-image {
+            width: 100%;
+            display: block;
+            transition: transform 0.3s;
+        }
+
+        .pin-card:hover .pin-image {
+            transform: scale(1.03);
+        }
+
+        .pin-info {
+            padding: 15px;
+        }
+
+        .pin-description {
+            font-size: 14px;
+            margin-bottom: 12px;
+            color: #333;
+        }
+
+        .pin-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            margin-bottom: 10px;
+        }
+
+        .pin-board {
+            color: #666;
+            text-decoration: none;
+        }
+
+        .pin-user {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: #666;
+            text-decoration: none;
+        }
+
+        .user-icon {
+            display: inline-flex;
+            width: 24px;
+            height: 24px;
+            background: #e60023;
+            color: white;
+            border-radius: 50%;
+            justify-content: center;
+            align-items: center;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        .pin-board:hover, .pin-user:hover {
+            color: #e60023;
+        }
+
+        .pin-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .pin-tag {
+            font-size: 12px;
+            color: #666;
+            background: #f0f0f0;
+            text-decoration: none;
+            padding: 4px 8px;
+            border-radius: 12px;
+        }
+
+        .pin-tag:hover {
+            background: #e0e0e0;
+        }
+
+        .no-results, .search-empty {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .no-results h2, .search-empty h2 {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .no-results p, .search-empty p {
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .popular-tags {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .tag-button {
+            padding: 12px 24px;
+            background: #f0f0f0;
+            color: #333;
+            border-radius: 24px;
+            text-decoration: none;
+            font-size: 16px;
+            transition: background-color 0.2s;
+        }
+
+        .tag-button:hover {
+            background: #e0e0e0;
+        }
+
+        .category-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .category-card {
+            text-decoration: none;
+            text-align: center;
+        }
+
+        .category-image {
+            width: 100%;
+            aspect-ratio: 1/1;
+            border-radius: 16px;
+            margin-bottom: 10px;
+            background-color: #f0f0f0;
+        }
+
+        .category-card span {
+            color: #333;
+            font-weight: 500;
+        }
+
+        .travel-bg, .food-bg, .design-bg, .fashion-bg, .cars-bg, .tech-bg {
+            background-color: #f0f0f0;
+            position: relative;
+        }
+
+        .travel-bg::after, .food-bg::after, .design-bg::after, 
+        .fashion-bg::after, .cars-bg::after, .tech-bg::after {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+        }
+
+        .travel-bg::after { content: '✈️'; }
+        .food-bg::after { content: '🍕'; }
+        .design-bg::after { content: '🎨'; }
+        .fashion-bg::after { content: '👗'; }
+        .cars-bg::after { content: '🚗'; }
+        .tech-bg::after { content: '💻'; }
     </style>
 </head>
 <body>
@@ -979,7 +1307,9 @@
     <!-- Top Navigation -->
     <header class="top-nav">
         <div class="search-container">
-            <input type="text" class="search-bar" placeholder="Search for pins, boards and more...">
+            <form action="/search" method="GET">
+                <input type="text" name="q" class="search-bar" placeholder="Search for pins, boards and more...">
+            </form>
         </div>
         
         <div class="user-controls">
