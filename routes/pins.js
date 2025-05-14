@@ -7,7 +7,7 @@ const { ensureAuthenticated } = require('../config/auth');
 const { pinPicture, repinPicture } = require('../services/pinboardService');
 const pool = require('../db');
 const { likePicture, unlikePicture, addComment, getComments } = require('../services/likesAndCommentsFunctions');
-
+// const fetch = require('node-fetch');
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -40,35 +40,73 @@ const upload = multer({
 });
 
 // Handle pin creation from uploaded file
+// Handle pin creation (from file upload or URL)
 router.post('/create', ensureAuthenticated, upload.single('image_file'), async (req, res) => {
     try {
         const boardId = req.body.board_id;
         const description = req.body.description || '';
         const tags = req.body.tags || '';
+        const imageUrl = req.body.image_url || '';
+        const sourceUrl = req.body.source_url || '';
         
-        // Check if file was uploaded
-        if (!req.file) {
-            req.flash('error_msg', 'Please upload an image file');
+        let imageData = null;
+        let originalUrl = null;
+        
+        // Check which method was used (file upload or URL)
+        if (req.file) {
+            // Method 1: File upload
+            const imagePath = req.file.path;
+            imageData = fs.readFileSync(imagePath);
+            originalUrl = `/uploads/${req.file.filename}`;
+            systemUrl = originalUrl;
+        } else if (imageUrl) {
+            // Method 2: URL
+            try {
+                // Fetch the image from the provided URL
+                const response = await fetch(imageUrl);
+                
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch image: ${response.statusText}`);
+                }
+                
+                const buffer = await response.arrayBuffer();
+                imageData = Buffer.from(buffer);
+                
+                // Generate a unique filename for the image
+                const filename = `url-${Date.now()}-${Math.round(Math.random() * 1E9)}${path.extname(imageUrl) || '.jpg'}`;
+                
+                // Save the image to disk
+                const uploadDir = path.join(__dirname, '../public/uploads');
+                if (!fs.existsSync(uploadDir)) {
+                    fs.mkdirSync(uploadDir, { recursive: true });
+                }
+                
+                const filePath = path.join(uploadDir, filename);
+                fs.writeFileSync(filePath, imageData);
+                
+                // Set URLs
+                originalUrl = imageUrl;
+                systemUrl = `/uploads/${filename}`;
+            } catch (error) {
+                console.error('Error fetching image from URL:', error);
+                req.flash('error_msg', `Failed to fetch image from URL: ${error.message}`);
+                return res.redirect(`/boards/${boardId}`);
+            }
+        } else {
+            req.flash('error_msg', 'Please provide either an image file or image URL');
             return res.redirect(`/boards/${boardId}`);
         }
         
-        // Read the file from disk
-        const imagePath = req.file.path;
-        const imageData = fs.readFileSync(imagePath);
-        
-        // Generate system URL based on the actual saved file path
-        const systemUrl = `/uploads/${req.file.filename}`;
-        
-        // Process tags into array
+        // Process tags
         const tagArray = tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
         
-        // Use the pinPicture service with the actual system URL
+        // Use pinboardService to create the pin
         const result = await pinPicture(
             req.user.user_id,
             boardId,
             imageData,
-            systemUrl, // Use the actual URL where the file was saved
-            systemUrl, // Use the same URL as the original URL
+            systemUrl,
+            sourceUrl || originalUrl,
             description,
             tagArray
         );
@@ -86,7 +124,6 @@ router.post('/create', ensureAuthenticated, upload.single('image_file'), async (
         res.redirect(`/boards/${req.body.board_id || ''}`);
     }
 });
-
 
 // Get pin details including like status
 // Get pin details including like status

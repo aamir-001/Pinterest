@@ -53,24 +53,61 @@
         <form id="addPinForm" action="/pins/create" method="POST" enctype="multipart/form-data">
             <input type="hidden" name="board_id" value="<%= board.board_id %>">
             
-            <div class="form-group">
-                <label for="pinImage">Upload Image</label>
-                <input type="file" id="pinImage" name="image_file" class="form-control" accept="image/*" required>
+            <div class="pin-source-container">
+                <p class="pin-source-label">Add a pin from:</p>
+                <div class="pin-source-tabs">
+                    <button type="button" class="pin-source-tab active" data-source="upload">Upload</button>
+                    <button type="button" class="pin-source-tab" data-source="url">URL</button>
+                </div>
             </div>
             
-            <div class="form-group">
-                <label for="pinDescription">Description</label>
-                <textarea id="pinDescription" name="description" class="form-control" rows="3" placeholder="Describe this pin"></textarea>
+            <div id="uploadSection" class="pin-source-section active">
+                <div class="form-group">
+                    <div class="upload-input-container">
+                        <input type="file" id="pinImage" name="image_file" accept="image/*">
+                        <div class="upload-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"></path>
+                                <polyline points="17 8 12 3 7 8"></polyline>
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                            </svg>
+                        </div>
+                        <p class="upload-text">Click to upload</p>
+                    </div>
+                    <div class="image-preview-container"></div>
+                </div>
             </div>
             
-            <div class="form-group">
-                <label for="pinTags">Tags (comma separated)</label>
-                <input type="text" id="pinTags" name="tags" class="form-control" placeholder="nature, mountains, hiking">
+            <div id="urlSection" class="pin-source-section">
+                <div class="form-group">
+                    <label for="pinUrl">Image URL</label>
+                    <div class="url-input-container">
+                        <input type="url" id="pinUrl" name="image_url" placeholder="https://example.com/image.jpg">
+                    </div>
+                    <div class="url-preview-container"></div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="sourceUrl">Source Website (optional)</label>
+                    <input type="url" id="sourceUrl" name="source_url" placeholder="https://example.com/page-with-image">
+                </div>
             </div>
             
-            <div class="form-actions">
-                <button type="button" class="btn-cancel" onclick="closePinModal()">Cancel</button>
-                <button type="submit" class="btn-create">Create Pin</button>
+            <div class="pin-source-section active">
+                <div class="form-group">
+                    <label for="pinDescription">Description</label>
+                    <textarea id="pinDescription" name="description" placeholder="Describe this pin"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="pinTags">Tags (comma separated)</label>
+                    <input type="text" id="pinTags" name="tags" placeholder="nature, mountains, hiking">
+                </div>
+            </div>
+            
+            <div class="pin-form-actions">
+                <button type="button" class="cancel-btn" onclick="closePinModal()">Cancel</button>
+                <button type="submit" class="create-pin-btn">Create Pin</button>
             </div>
         </form>
     </div>
@@ -656,4 +693,219 @@ document.getElementById('likeButton').addEventListener('click', function() {
             alert('Failed to repin. Please try again.');
         }
     });
+
+     document.querySelectorAll('.pin-source-tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+            // Remove active class from all tabs
+            document.querySelectorAll('.pin-source-tab').forEach(t => t.classList.remove('active'));
+            // Add active class to clicked tab
+            this.classList.add('active');
+            
+            // Hide all source sections
+            document.querySelectorAll('.pin-source-section').forEach(s => s.classList.remove('active'));
+            
+            // Show the correct section
+            const source = this.getAttribute('data-source');
+            document.getElementById(source + 'Section').classList.add('active');
+            
+            // Reset form fields
+            if (source === 'url') {
+                document.getElementById('pinImage').value = '';
+                document.querySelector('.image-preview-container').innerHTML = '';
+            } else {
+                document.getElementById('pinUrl').value = '';
+                document.getElementById('sourceUrl').value = '';
+                document.querySelector('.url-preview-container').innerHTML = '';
+            }
+        });
+    });
+    
+    // Image preview for upload
+    document.getElementById('pinImage').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const previewContainer = document.querySelector('.image-preview-container');
+                previewContainer.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+    
+    // Image preview for URL
+    document.getElementById('pinUrl').addEventListener('input', debounce(function(e) {
+        const url = e.target.value.trim();
+        const previewContainer = document.querySelector('.url-preview-container');
+        
+        if (url && isValidUrl(url)) {
+            previewContainer.innerHTML = `
+                <div class="loading-preview">Loading preview...</div>
+                <img src="${url}" alt="Preview" 
+                     onload="this.parentNode.querySelector('.loading-preview')?.remove()" 
+                     onerror="this.parentNode.innerHTML = '<div class=\'preview-error\'>Could not load image</div>'">
+            `;
+        } else {
+            previewContainer.innerHTML = '';
+        }
+    }, 500));
+
+    
+    
+    // Validate form before submission
+    document.getElementById('addPinForm').addEventListener('submit', function(e) {
+        const activeTab = document.querySelector('.pin-source-tab.active').getAttribute('data-source');
+        let isValid = true;
+        let errorMessage = '';
+        
+        if (activeTab === 'upload') {
+            const fileInput = document.getElementById('pinImage');
+            if (!fileInput.files.length) {
+                isValid = false;
+                errorMessage = 'Please select an image to upload';
+            }
+        } else if (activeTab === 'url') {
+            const urlInput = document.getElementById('pinUrl');
+            if (!urlInput.value.trim() || !isValidUrl(urlInput.value.trim())) {
+                isValid = false;
+                errorMessage = 'Please enter a valid image URL';
+            }
+        }
+        
+        if (!isValid) {
+            e.preventDefault();
+            alert(errorMessage);
+        }
+    });
+    
+    // Utility functions
+    function debounce(func, wait) {
+        let timeout;
+        return function(...args) {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(this, args), wait);
+        };
+    }
+    
+    function isValidUrl(string) {
+        try {
+            new URL(string);
+            return true;
+        } catch (_) {
+            return false;
+        }
+    }
+
+
+    // Add this to your existing JavaScript for the pin modal
+document.addEventListener('DOMContentLoaded', function() {
+    // Pin source tab switching
+    document.querySelectorAll('.pin-source-tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+            // Update active tab
+            document.querySelectorAll('.pin-source-tab').forEach(t => 
+                t.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Show corresponding section
+            const source = this.getAttribute('data-source');
+            document.querySelectorAll('.pin-source-section').forEach(section => {
+                if (section.id === source + 'Section') {
+                    section.classList.add('active');
+                } else if (section.id) { // Only hide sections with IDs (not the shared description/tags section)
+                    section.classList.remove('active');
+                }
+            });
+        });
+    });
+    
+    // Image preview for upload
+    document.getElementById('pinImage')?.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        const previewContainer = document.querySelector('.image-preview-container');
+        
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewContainer.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
+                
+                // Update upload text
+                const uploadText = document.querySelector('.upload-text');
+                if (uploadText) {
+                    uploadText.textContent = file.name;
+                }
+            };
+            reader.readAsDataURL(file);
+        } else {
+            previewContainer.innerHTML = '';
+        }
+    });
+    
+    // Image preview for URL
+    document.getElementById('pinUrl')?.addEventListener('input', debounce(function(e) {
+        const url = e.target.value.trim();
+        const previewContainer = document.querySelector('.url-preview-container');
+        
+        if (url && isValidUrl(url)) {
+            previewContainer.innerHTML = `
+                <div class="loading-preview">Loading preview...</div>
+                <img src="${url}" alt="Preview" 
+                     onload="this.parentNode.querySelector('.loading-preview')?.remove()" 
+                     onerror="this.parentNode.innerHTML = '<div class=\'preview-error\'>Could not load image</div>'">
+            `;
+        } else {
+            previewContainer.innerHTML = '';
+        }
+    }, 500));
+    
+    // Form validation
+    document.getElementById('addPinForm')?.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const activeTab = document.querySelector('.pin-source-tab.active')?.getAttribute('data-source');
+        let isValid = true;
+        let errorMessage = '';
+        
+        if (activeTab === 'upload') {
+            const fileInput = document.getElementById('pinImage');
+            if (!fileInput.files.length) {
+                isValid = false;
+                errorMessage = 'Please select an image to upload';
+            }
+        } else if (activeTab === 'url') {
+            const urlInput = document.getElementById('pinUrl');
+            if (!urlInput.value.trim() || !isValidUrl(urlInput.value.trim())) {
+                isValid = false;
+                errorMessage = 'Please enter a valid image URL';
+            }
+        }
+        
+        if (!isValid) {
+            alert(errorMessage);
+        } else {
+            this.submit();
+        }
+    });
+});
+
+// Utility function for debouncing
+function debounce(func, wait) {
+    let timeout;
+    return function(...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+    };
+}
+
+// Utility function to validate URLs
+function isValidUrl(string) {
+    try {
+        new URL(string);
+        return true;
+    } catch (_) {
+        return false;
+    }
+}
+
+
 </script>
