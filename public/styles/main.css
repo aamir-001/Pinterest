@@ -240,3 +240,91 @@
     gap: 5px;
   }
   
+  /* Friends Feature Styles */
+  .friends-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+  }
+
+  .friends-title h2 {
+      font-size: 28px;
+      color: #333;
+      margin-bottom: 5px;
+  }
+
+  .friends-title p {
+      color: #666;
+      font-size: 15px;
+  }
+
+  .friends-actions {
+      display: flex;
+      gap: 10px;
+  }
+
+  .add-friend-btn {
+      padding: 10px 20px;
+      background-color: #e60023;
+      color: white;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 14px;
+      text-decoration: none;
+      transition: background-color 0.3s;
+      display: inline-flex;
+      align-items: center;
+      font-weight: 500;
+  }
+
+  /* Friend Request Section */
+  .pending-requests-section {
+      margin-bottom: 40px;
+  }
+
+  .friend-requests-list {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+  }
+
+  .friend-request-card {
+      background: white;
+      border-radius: 12px;
+      padding: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+
+  /* Friends Grid */
+  .friends-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 20px;
+  }
+
+  /* Notification Indicator */
+  .notification-indicator {
+      position: relative;
+      display: inline-block;
+  }
+
+  .notification-badge {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      background-color: #e60023;
+      color: white;
+      border-radius: 50%;
+      width: 18px;
+      height: 18px;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+  }
