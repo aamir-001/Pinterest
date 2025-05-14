@@ -1250,7 +1250,7 @@
             position: relative;
         }
 
-        .travel-bg::after, .food-bg::after, .design-bg::after, 
+        .travel-bg::after, .food-bg::after, .design-bg::after,
         .fashion-bg::after, .cars-bg::after, .tech-bg::after {
             position: absolute;
             top: 50%;
@@ -1596,16 +1596,16 @@
                 height: 90vh;
                 margin: 5vh auto;
             }
-            
+
             .pin-detail-content {
                 flex-direction: column;
                 height: 100%;
             }
-            
+
             .pin-detail-image-container {
                 height: 50%;
             }
-            
+
             .pin-detail-info {
                 width: 100%;
                 height: 50%;
@@ -1689,6 +1689,180 @@ body > .close-modal,
     cursor: pointer;
     transition: background-color 0.2s;
 }
+
+        /* Friends Feature Styles */
+        .friends-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .friends-title h2 {
+            font-size: 28px;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .friends-title p {
+            color: #666;
+            font-size: 15px;
+        }
+
+        .friends-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .add-friend-btn {
+            padding: 10px 20px;
+            background-color: #e60023;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+            transition: background-color 0.3s;
+            display: inline-flex;
+            align-items: center;
+            font-weight: 500;
+        }
+
+        /* Friend Request Section */
+        .pending-requests-section {
+            margin-bottom: 40px;
+        }
+
+        .friend-requests-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .friend-request-card {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        /* Friends Grid */
+        .friends-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        /* Notification Indicator */
+        .notification-indicator {
+            position: relative;
+            display: inline-block;
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: #e60023;
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        /* Repin Button Styles */
+        .repin-button {
+            display: flex;
+            align-items: center;
+            background: #e60023;
+            color: white;
+            border: none;
+            cursor: pointer;
+            padding: 8px 14px;
+            border-radius: 24px;
+            font-weight: 500;
+            transition: all 0.2s;
+            margin-left: 10px;
+        }
+
+        .repin-button svg {
+            margin-right: 8px;
+            stroke-width: 1.5px;
+        }
+
+        .repin-button:hover {
+            background-color: #ad1219;
+        }
+
+        /* Board selection in repin modal */
+        #repinBoard {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9e9e9;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+            appearance: none;
+            background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center;
+            background-size: 16px;
+        }
+
+        #repinBoard:focus {
+            outline: none;
+            border-color: #e60023;
+        }
+
+        /* Empty boards message */
+        .no-boards-message {
+            padding: 15px;
+            text-align: center;
+            color: #666;
+            background-color: #f0f0f0;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+
+        .create-board-link {
+            color: #e60023;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .create-board-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Repin Success Message */
+        .repin-success-message {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #4BB543;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-weight: 500;
+            z-index: 2000;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            animation: fadeInOut 3s ease forwards;
+        }
+
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translate(-50%, -20px); }
+            10% { opacity: 1; transform: translate(-50%, 0); }
+            90% { opacity: 1; transform: translate(-50%, 0); }
+            100% { opacity: 0; transform: translate(-50%, -20px); }
+        }
     </style>
 </head>
 <body>
