@@ -40,7 +40,6 @@ const upload = multer({
 });
 
 // Handle pin creation from uploaded file
-// Handle pin creation (from file upload or URL)
 router.post('/create', ensureAuthenticated, upload.single('image_file'), async (req, res) => {
     try {
         const boardId = req.body.board_id;
@@ -49,8 +48,17 @@ router.post('/create', ensureAuthenticated, upload.single('image_file'), async (
         const imageUrl = req.body.image_url || '';
         const sourceUrl = req.body.source_url || '';
         
+        console.log('Pin creation request:');
+        console.log('- Board ID:', boardId);
+        console.log('- Description:', description);
+        console.log('- Tags:', tags);
+        console.log('- Image URL:', imageUrl);
+        console.log('- Source URL:', sourceUrl);
+        console.log('- File uploaded:', req.file ? req.file.filename : 'none');
+        
         let imageData = null;
         let originalUrl = null;
+        let systemUrl = null;
         
         // Check which method was used (file upload or URL)
         if (req.file) {
@@ -59,6 +67,7 @@ router.post('/create', ensureAuthenticated, upload.single('image_file'), async (
             imageData = fs.readFileSync(imagePath);
             originalUrl = `/uploads/${req.file.filename}`;
             systemUrl = originalUrl;
+            console.log('- Using uploaded file:', originalUrl);
         } else if (imageUrl) {
             // Method 2: URL
             try {
@@ -87,18 +96,25 @@ router.post('/create', ensureAuthenticated, upload.single('image_file'), async (
                 // Set URLs
                 originalUrl = imageUrl;
                 systemUrl = `/uploads/${filename}`;
+                console.log('- Using image from URL:', imageUrl);
+                console.log('- Saved to:', systemUrl);
             } catch (error) {
                 console.error('Error fetching image from URL:', error);
                 req.flash('error_msg', `Failed to fetch image from URL: ${error.message}`);
                 return res.redirect(`/boards/${boardId}`);
             }
         } else {
+            console.log('- No image source provided');
             req.flash('error_msg', 'Please provide either an image file or image URL');
             return res.redirect(`/boards/${boardId}`);
         }
         
-        // Process tags
-        const tagArray = tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
+        // Process tags into array
+        const tagArray = tags.split(',')
+            .map(tag => tag.trim())
+            .filter(tag => tag.length > 0);
+        
+        console.log('- Processed tag array:', tagArray);
         
         // Use pinboardService to create the pin
         const result = await pinPicture(
@@ -110,6 +126,8 @@ router.post('/create', ensureAuthenticated, upload.single('image_file'), async (
             description,
             tagArray
         );
+        
+        console.log('- Pin creation result:', result);
         
         if (result.success) {
             req.flash('success_msg', 'Pin created successfully!');
@@ -125,7 +143,7 @@ router.post('/create', ensureAuthenticated, upload.single('image_file'), async (
     }
 });
 
-// Get pin details including like status
+
 // Get pin details including like status
 router.get('/:pinId/details', ensureAuthenticated, async (req, res) => {
     try {

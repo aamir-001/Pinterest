@@ -38,7 +38,7 @@ async function createPinboard(userId, boardName, description, friendsOnlyComment
  * @param {number} userId - User ID of the person pinning
  * @param {number} boardId - Board ID to pin to
  * @param {Buffer} imageData - Binary image data
- * @param {string} originalUrl - Original URL of the image
+ * @param {string} systemUrl - System URL where the image is stored
  * @param {string} sourcePageUrl - URL of the page where the image was found
  * @param {string} description - Pin description
  * @param {Array<string>} tags - Tags to associate with the picture
@@ -48,19 +48,20 @@ async function pinPicture(userId, boardId, imageData, systemUrl, sourcePageUrl, 
   const client = await pool.connect();
   
   try {
-    console.log('Beginning pin creation transaction');
+    console.log('Starting pin creation with tags:', tags);
+    
     await client.query('BEGIN');
     
-    console.log('Storing image data...');
+    // Store image data
     const imageResult = await client.query(
       'INSERT INTO Image_Storage (image_data) VALUES ($1) RETURNING image_id',
       [imageData]
     );
     
     const imageId = imageResult.rows[0].image_id;
-    console.log('Image stored with ID:', imageId);
+    console.log(`Image stored with ID: ${imageId}`);
     
-    console.log('Storing picture with system URL:', systemUrl);
+    // Store picture metadata
     const pictureResult = await client.query(
       `INSERT INTO Pictures (image_id, original_url, source_page_url, system_url)
        VALUES ($1, $2, $3, $4)
@@ -69,9 +70,9 @@ async function pinPicture(userId, boardId, imageData, systemUrl, sourcePageUrl, 
     );
     
     const pictureId = pictureResult.rows[0].picture_id;
-    console.log('Picture stored with ID:', pictureId);
+    console.log(`Picture stored with ID: ${pictureId}`);
     
-    console.log('Creating pin...');
+    // Create pin
     const pinResult = await client.query(
       `INSERT INTO Pins (board_id, picture_id, user_id, description)
        VALUES ($1, $2, $3, $4)
@@ -80,12 +81,59 @@ async function pinPicture(userId, boardId, imageData, systemUrl, sourcePageUrl, 
     );
     
     const pinId = pinResult.rows[0].pin_id;
-    console.log('Pin created with ID:', pinId);
+    console.log(`Pin created with ID: ${pinId}`);
     
-    // Rest of function...
+    // Add tags
+    console.log(`Processing ${tags.length} tags for picture ID ${pictureId}`);
     
-    console.log('Transaction committed successfully');
+    if (tags && tags.length > 0) {
+      for (const tagName of tags) {
+        if (!tagName || tagName.trim().length === 0) {
+          console.log(`Skipping empty tag: "${tagName}"`);
+          continue;
+        }
+        
+        const normalizedTag = tagName.toLowerCase().trim();
+        console.log(`Processing tag: "${normalizedTag}"`);
+        
+        try {
+          // Insert tag if it doesn't exist
+          await client.query(
+            'INSERT INTO Tags (tag_name) VALUES ($1) ON CONFLICT (tag_name) DO NOTHING',
+            [normalizedTag]
+          );
+          
+          // Get tag id
+          const tagResult = await client.query(
+            'SELECT tag_id FROM Tags WHERE tag_name = $1',
+            [normalizedTag]
+          );
+          
+          if (tagResult.rows.length === 0) {
+            console.log(`Warning: Could not find tag: "${normalizedTag}"`);
+            continue;
+          }
+          
+          const tagId = tagResult.rows[0].tag_id;
+          console.log(`Using tag ID: ${tagId} for "${normalizedTag}"`);
+          
+          // Link tag to picture
+          await client.query(
+            'INSERT INTO Picture_Tags (picture_id, tag_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
+            [pictureId, tagId]
+          );
+          console.log(`Linked tag ${tagId} to picture ${pictureId}`);
+        } catch (tagError) {
+          console.error(`Error processing tag "${normalizedTag}":`, tagError);
+          // Continue with other tags even if one fails
+        }
+      }
+    } else {
+      console.log('No tags provided for this pin');
+    }
+    
     await client.query('COMMIT');
+    console.log('Transaction committed successfully');
     
     return {
       success: true,
@@ -106,7 +154,6 @@ async function pinPicture(userId, boardId, imageData, systemUrl, sourcePageUrl, 
     client.release();
   }
 }
-
 
 /**
  * Repin a picture to another board
