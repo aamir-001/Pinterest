@@ -1,0 +1,160 @@
+<div class="stream-header">
+    <h2>Add Boards to "<%= stream.stream_name %>"</h2>
+    <p>Search and add boards to your follow stream</p>
+</div>
+
+<div class="board-search-container">
+    <form action="/streams/<%= stream.stream_id %>/add-board" method="GET" class="board-search-form">
+        <input 
+            type="text" 
+            name="q" 
+            value="<%= searchTerm %>" 
+            class="form-control search-input" 
+            placeholder="Search for boards by name..."
+        >
+        <button type="submit" class="search-btn">Search</button>
+    </form>
+</div>
+
+<div class="boards-container">
+    <% if (boards && boards.length > 0) { %>
+        <div class="boards-grid">
+            <% boards.forEach(board => { %>
+                <div class="board-card">
+                    <div class="board-thumbnail">
+                        <span class="board-thumbnail-icon">📁</span>
+                    </div>
+                    <div class="board-info">
+                        <h4 class="board-name"><%= board.board_name %></h4>
+                        <div class="board-meta">
+                            <span><%= board.pin_count || 0 %> pins</span>
+                            <span>• By <%= board.username %></span>
+                        </div>
+                        <p class="board-description"><%= board.description || 'No description' %></p>
+                        <form action="/streams/<%= stream.stream_id %>/add-board" method="POST">
+                            <input type="hidden" name="board_id" value="<%= board.board_id %>">
+                            <button type="submit" class="add-to-stream-btn">Add to Stream</button>
+                        </form>
+                    </div>
+                </div>
+            <% }); %>
+        </div>
+    <% } else { %>
+        <div class="empty-search">
+            <h3>No boards found</h3>
+            <% if (searchTerm) { %>
+                <p>No boards matching "<%= searchTerm %>" were found. Try a different search term.</p>
+            <% } else { %>
+                <p>You have added all available boards to this stream.</p>
+            <% } %>
+        </div>
+    <% } %>
+    
+    <% if (error) { %>
+        <div class="error-message">
+            <p><%= error %></p>
+        </div>
+    <% } %>
+</div>
+
+<div class="stream-actions">
+    <a href="/streams/<%= stream.stream_id %>" class="back-to-stream-btn">← Back to Stream</a>
+</div>
+
+<style>
+    .board-search-container {
+        margin-bottom: 20px;
+    }
+    
+    .board-search-form {
+        display: flex;
+        max-width: 500px;
+    }
+    
+    .search-input {
+        flex: 1;
+        height: 48px;
+        padding: 0 20px;
+        border: 2px solid #e9e9e9;
+        border-radius: 24px 0 0 24px;
+        font-size: 16px;
+        outline: none;
+    }
+    
+    .search-input:focus {
+        border-color: #e60023;
+    }
+    
+    .search-btn {
+        width: 100px;
+        height: 48px;
+        background: #e60023;
+        color: white;
+        border: none;
+        border-radius: 0 24px 24px 0;
+        cursor: pointer;
+        font-size: 16px;
+    }
+    
+    .search-btn:hover {
+        background-color: #ad1219;
+    }
+    
+    .board-description {
+        margin-top: 10px;
+        margin-bottom: 15px;
+        color: #666;
+        font-size: 14px;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .add-to-stream-btn {
+        background-color: #e60023;
+        color: white;
+        border: none;
+        border-radius: 20px;
+        padding: 8px 16px;
+        font-size: 14px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+    
+    .add-to-stream-btn:hover {
+        background-color: #ad1219;
+    }
+    
+    .empty-search {
+        text-align: center;
+        padding: 60px 20px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .empty-search h3 {
+        font-size: 24px;
+        color: #333;
+        margin-bottom: 12px;
+    }
+    
+    .empty-search p {
+        color: #666;
+    }
+    
+    .back-to-stream-btn {
+        display: inline-block;
+        padding: 10px 20px;
+        color: #333;
+        text-decoration: none;
+        font-weight: 500;
+        margin-top: 20px;
+    }
+    
+    .back-to-stream-btn:hover {
+        color: #e60023;
+    }
+</style>
