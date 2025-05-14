@@ -15,6 +15,12 @@ require('./config/passport')(passport);
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
+// Serve static files from public directory
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Explicitly serve the uploads directory
+app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
+
 // Use express-ejs-layouts FIRST (moved from bottom)
 app.use(expressLayouts);
 app.set('layout', 'layouts/main');
@@ -58,6 +64,8 @@ app.use('/profile', require('./routes/profile'));
 app.use('/streams', require('./routes/streams'));
 // app.js
 app.use('/boards', require('./routes/boards'));
+app.use('/pins', require('./routes/pins')); // Add this line
+
 
 // Start server
 const PORT = process.env.PORT || 3000;

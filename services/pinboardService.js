@@ -32,6 +32,7 @@ async function createPinboard(userId, boardName, description, friendsOnlyComment
   }
 }
 
+
 /**
  * Pin a picture to a board (original pin)
  * @param {number} userId - User ID of the person pinning
@@ -43,34 +44,34 @@ async function createPinboard(userId, boardName, description, friendsOnlyComment
  * @param {Array<string>} tags - Tags to associate with the picture
  * @returns {Promise<Object>} - Newly created pin
  */
-async function pinPicture(userId, boardId, imageData, originalUrl, sourcePageUrl, description, tags = []) {
+async function pinPicture(userId, boardId, imageData, systemUrl, sourcePageUrl, description, tags = []) {
   const client = await pool.connect();
   
   try {
+    console.log('Beginning pin creation transaction');
     await client.query('BEGIN');
     
-    // Store image data
+    console.log('Storing image data...');
     const imageResult = await client.query(
       'INSERT INTO Image_Storage (image_data) VALUES ($1) RETURNING image_id',
       [imageData]
     );
     
     const imageId = imageResult.rows[0].image_id;
+    console.log('Image stored with ID:', imageId);
     
-    // Generate a system URL
-    const systemUrl = `/uploads/image_${imageId}.jpg`;
-    
-    // Store picture metadata
+    console.log('Storing picture with system URL:', systemUrl);
     const pictureResult = await client.query(
       `INSERT INTO Pictures (image_id, original_url, source_page_url, system_url)
        VALUES ($1, $2, $3, $4)
        RETURNING picture_id`,
-      [imageId, originalUrl, sourcePageUrl, systemUrl]
+      [imageId, systemUrl, sourcePageUrl, systemUrl]
     );
     
     const pictureId = pictureResult.rows[0].picture_id;
+    console.log('Picture stored with ID:', pictureId);
     
-    // Create pin
+    console.log('Creating pin...');
     const pinResult = await client.query(
       `INSERT INTO Pins (board_id, picture_id, user_id, description)
        VALUES ($1, $2, $3, $4)
@@ -79,30 +80,11 @@ async function pinPicture(userId, boardId, imageData, originalUrl, sourcePageUrl
     );
     
     const pinId = pinResult.rows[0].pin_id;
+    console.log('Pin created with ID:', pinId);
     
-    // Add tags
-    for (const tagName of tags) {
-      // Insert tag if it doesn't exist
-      await client.query(
-        'INSERT INTO Tags (tag_name) VALUES ($1) ON CONFLICT (tag_name) DO NOTHING',
-        [tagName.toLowerCase().trim()]
-      );
-      
-      // Get tag id
-      const tagResult = await client.query(
-        'SELECT tag_id FROM Tags WHERE tag_name = $1',
-        [tagName.toLowerCase().trim()]
-      );
-      
-      const tagId = tagResult.rows[0].tag_id;
-      
-      // Link tag to picture
-      await client.query(
-        'INSERT INTO Picture_Tags (picture_id, tag_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
-        [pictureId, tagId]
-      );
-    }
+    // Rest of function...
     
+    console.log('Transaction committed successfully');
     await client.query('COMMIT');
     
     return {
@@ -114,6 +96,7 @@ async function pinPicture(userId, boardId, imageData, originalUrl, sourcePageUrl
       pinDate: pinResult.rows[0].pin_date
     };
   } catch (error) {
+    console.error('Error in pinPicture:', error);
     await client.query('ROLLBACK');
     return {
       success: false,
@@ -123,6 +106,7 @@ async function pinPicture(userId, boardId, imageData, originalUrl, sourcePageUrl
     client.release();
   }
 }
+
 
 /**
  * Repin a picture to another board

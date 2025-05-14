@@ -18,7 +18,9 @@
             <% pins.forEach(pin => { %>
                 <div class="pin-card">
                     <div class="pin-image-container">
-                        <img src="<%= pin.system_url %>" alt="Pin" class="pin-image">
+                        <img src="<%= pin.system_url %>" alt="<%= pin.description || 'Pin' %>" 
+                             class="pin-image" 
+                             onerror="this.onerror=null; this.src='/images/pin-placeholder.jpg';">
                     </div>
                     <div class="pin-info">
                         <p class="pin-description"><%= pin.description %></p>
@@ -39,3 +41,314 @@
         </div>
     <% } %>
 </div>
+
+<!-- Add Pin Modal -->
+<div id="addPinModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Add a pin</h3>
+            <span class="close-modal">&times;</span>
+        </div>
+        
+        <form id="addPinForm" action="/pins/create" method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="board_id" value="<%= board.board_id %>">
+            
+            <div class="form-group">
+                <label for="pinImage">Upload Image</label>
+                <input type="file" id="pinImage" name="image_file" class="form-control" accept="image/*" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="pinDescription">Description</label>
+                <textarea id="pinDescription" name="description" class="form-control" rows="3" placeholder="Describe this pin"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="pinTags">Tags (comma separated)</label>
+                <input type="text" id="pinTags" name="tags" class="form-control" placeholder="nature, mountains, hiking">
+            </div>
+            
+            <div class="form-actions">
+                <button type="button" class="btn-cancel" onclick="closePinModal()">Cancel</button>
+                <button type="submit" class="btn-create">Create Pin</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Pin Detail Modal -->
+<div id="pinDetailModal" class="modal">
+    <div class="modal-content pin-detail-modal">
+        <div class="modal-header">
+            <span class="close-modal" id="closePinDetailModal">&times;</span>
+        </div>
+        
+        <div class="pin-detail-content">
+            <div class="pin-detail-image-container">
+                <img id="pinDetailImage" src="" alt="Pin Detail" class="pin-detail-image">
+            </div>
+            
+            <div class="pin-detail-info">
+                <div class="pin-detail-info-content">
+                    <h3 id="pinDetailDescription" class="pin-detail-title"></h3>
+                    
+                    <div class="pin-detail-meta">
+                        <button id="likeButton" class="like-button">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                            </svg>
+                            <span id="likeCount">0</span> likes
+                        </button>
+                    </div>
+                    
+                    <div class="comments-section">
+                        <h4>Comments</h4>
+                        <div id="commentsContainer" class="comments-container">
+                            <!-- Comments will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="comment-form-container">
+                    <form id="commentForm" class="comment-form">
+                        <input type="hidden" id="pinIdInput" name="pin_id" value="">
+                        <textarea id="commentText" name="content" placeholder="Add a comment..."></textarea>
+                        <button type="submit" class="comment-submit-btn">Post</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Get the pin modal
+    const pinModal = document.getElementById('addPinModal');
+    
+    // Get all buttons that open the modal
+    const addPinBtns = document.querySelectorAll('.add-pin-btn');
+    
+    // Get the <span> element that closes the modal
+    const closePinBtn = pinModal.querySelector('.close-modal');
+    
+    // When the user clicks the button, open the modal 
+    addPinBtns.forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            pinModal.style.display = "block";
+            document.body.style.overflow = "hidden"; // Prevent scrolling
+        });
+    });
+    
+    // When the user clicks on <span> (x), close the modal
+    closePinBtn.addEventListener('click', function() {
+        closePinModal();
+    });
+    
+    // When the user clicks anywhere outside of the modal, close it
+    window.addEventListener('click', function(event) {
+        if (event.target == pinModal) {
+            closePinModal();
+        }
+    });
+    
+    // Close modal function
+    function closePinModal() {
+        pinModal.style.display = "none";
+        document.body.style.overflow = "auto"; // Re-enable scrolling
+    }
+    
+    // Preview image before upload
+    document.getElementById('pinImage').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.createElement('div');
+                preview.innerHTML = `<img src="${e.target.result}" style="max-width: 100%; max-height: 200px; margin-top: 10px;">`;
+                const container = document.querySelector('#pinImage').parentNode;
+                
+                // Remove previous preview if exists
+                const oldPreview = container.querySelector('.image-preview');
+                if (oldPreview) container.removeChild(oldPreview);
+                
+                preview.className = 'image-preview';
+                container.appendChild(preview);
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // ----------------------------------------------
+    // Pin Detail Modal Functionality
+    const pinDetailModal = document.getElementById('pinDetailModal');
+    const pinDetailImage = document.getElementById('pinDetailImage');
+    const pinDetailDescription = document.getElementById('pinDetailDescription');
+    const likeCount = document.getElementById('likeCount');
+    const pinIdInput = document.getElementById('pinIdInput');
+    const closePinDetailModal = document.getElementById('closePinDetailModal');
+    
+    // Add click event to all pin images
+    document.querySelectorAll('.pin-card').forEach(card => {
+        card.addEventListener('click', function() {
+            const pinId = this.getAttribute('data-pin-id');
+            const imgSrc = this.querySelector('.pin-image').src;
+            const description = this.querySelector('.pin-description').textContent;
+            const likes = this.querySelector('.pin-meta span:first-child').textContent;
+            
+            // Set modal content
+            pinDetailImage.src = imgSrc;
+            pinDetailDescription.textContent = description;
+            likeCount.textContent = likes.split(' ')[0]; // Extract the number
+            pinIdInput.value = pinId;
+            
+            // Load comments
+            loadComments(pinId);
+            
+            // Show modal
+            pinDetailModal.style.display = 'block';
+            document.body.style.overflow = 'hidden'; // Prevent scrolling
+        });
+    });
+    
+    // Close pin detail modal
+    closePinDetailModal.addEventListener('click', function() {
+        pinDetailModal.style.display = 'none';
+        document.body.style.overflow = 'auto'; // Re-enable scrolling
+    });
+    
+    // Close modal when clicking outside of it
+    window.addEventListener('click', function(event) {
+        if (event.target == pinDetailModal) {
+            pinDetailModal.style.display = 'none';
+            document.body.style.overflow = 'auto'; // Re-enable scrolling
+        }
+    });
+    
+    // Handle comment submission
+    document.getElementById('commentForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const pinId = pinIdInput.value;
+        const comment = document.getElementById('commentText').value;
+        
+        if (!comment.trim()) return;
+        
+        // Send comment to server
+        fetch('/pins/comment', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                pin_id: pinId,
+                content: comment
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Clear the form
+                document.getElementById('commentText').value = '';
+                // Reload comments
+                loadComments(pinId);
+            } else {
+                alert('Error posting comment: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error posting comment:', error);
+        });
+    });
+    
+    // Like button functionality
+    document.getElementById('likeButton').addEventListener('click', function() {
+        const pinId = pinIdInput.value;
+        
+        fetch('/pins/like', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                pin_id: pinId
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update like count
+                likeCount.textContent = data.likeCount;
+            } else {
+                alert('Error liking pin: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error liking pin:', error);
+        });
+    });
+    
+    // Function to load comments
+    // Function to load comments
+    function loadComments(pinId) {
+        fetch(`/pins/${pinId}/comments`)
+        .then(response => response.json())
+        .then(data => {
+            const commentsContainer = document.getElementById('commentsContainer');
+            commentsContainer.innerHTML = '';
+            
+            if (data.success && data.comments && data.comments.length > 0) {
+                data.comments.forEach(comment => {
+                    const commentEl = document.createElement('div');
+                    commentEl.className = 'comment';
+                    
+                    const initial = comment.username ? comment.username.charAt(0).toUpperCase() : 'U';
+                    
+                    commentEl.innerHTML = `
+                        <div class="comment-header">
+                            <div class="comment-author">
+                                <div class="user-avatar">${initial}</div>
+                                <span>${comment.username || 'User'}</span>
+                            </div>
+                            <span class="comment-date">${formatDate(new Date(comment.comment_date))}</span>
+                        </div>
+                        <div class="comment-content">${comment.content}</div>
+                    `;
+                    commentsContainer.appendChild(commentEl);
+                });
+            } else {
+                commentsContainer.innerHTML = '<p class="no-comments">No comments yet. Be the first to comment!</p>';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading comments:', error);
+            document.getElementById('commentsContainer').innerHTML = 
+                '<p class="no-comments">Failed to load comments. Please try again.</p>';
+        });
+    }
+    
+    // Helper function to format dates
+    function formatDate(date) {
+        const now = new Date();
+        const diff = Math.floor((now - date) / 1000); // Difference in seconds
+        
+        if (diff < 60) {
+            return 'Just now';
+        } else if (diff < 3600) {
+            const minutes = Math.floor(diff / 60);
+            return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+        } else if (diff < 86400) {
+            const hours = Math.floor(diff / 3600);
+            return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+        } else {
+            return date.toLocaleDateString();
+        }
+    }
+
+    // Enable/disable comment button based on input
+    document.getElementById('commentText').addEventListener('input', function() {
+        const submitBtn = document.querySelector('.comment-submit-btn');
+        submitBtn.disabled = !this.value.trim();
+    });
+    // -----------------------------------------------------------------
+</script>
