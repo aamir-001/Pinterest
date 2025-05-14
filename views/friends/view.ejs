@@ -1,65 +1,222 @@
-<div class="friend-profile-header">
-    <div class="friend-profile-banner"></div>
-    
-    <div class="friend-profile-info">
-        <div class="friend-profile-avatar">
-            <% if (friend.profile_picture_url) { %>
-                <img src="<%= friend.profile_picture_url %>" alt="<%= friend.username %>" class="profile-avatar-img">
-            <% } else { %>
-                <div class="profile-avatar-placeholder">
-                    <%= friend.username.charAt(0).toUpperCase() %>
-                </div>
-            <% } %>
+<!-- Updated view for friends/view.ejs -->
+<div class="friend-profile-container">
+    <div class="friend-profile-header">
+        <div class="friend-profile-banner">
+            <div class="banner-content">
+                <a href="/friends" class="back-btn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 12H5M12 19l-7-7 7-7"/>
+                    </svg>
+                    Back to Friends
+                </a>
+            </div>
         </div>
-        
-        <div class="friend-profile-details">
-            <h2 class="friend-profile-name"><%= friend.display_name || friend.username %></h2>
-            <p class="friend-profile-username">@<%= friend.username %></p>
-            <p class="friends-since">Friends since <%= new Date(friend.acceptance_date).toLocaleDateString() %></p>
+
+        <div class="friend-profile-info">
+            <div class="friend-profile-avatar">
+                <% if (friend.profile_picture_url) { %>
+                    <img src="<%= friend.profile_picture_url %>" alt="<%= friend.username %>" class="profile-avatar-img">
+                <% } else { %>
+                    <div class="profile-avatar-placeholder">
+                        <%= friend.username.charAt(0).toUpperCase() %>
+                    </div>
+                <% } %>
+            </div>
+
+            <div class="friend-profile-details">
+                <h2 class="friend-profile-name"><%= friend.display_name || friend.username %></h2>
+                <p class="friend-profile-username">@<%= friend.username %></p>
+                <p class="friends-since">
+                    <span class="dot"></span> Friends since <%= new Date(friend.acceptance_date).toLocaleDateString() %>
+                </p>
+            </div>
         </div>
     </div>
-    
-    <div class="friend-profile-actions">
-        <a href="/friends" class="back-btn">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M19 12H5M12 19l-7-7 7-7"/>
-            </svg>
-            Back to Friends
-        </a>
+
+    <div class="friend-boards-section">
+        <h3 class="boards-title"><%= friend.username %>'s Boards</h3>
+
+        <div class="boards-grid">
+            <!-- Your existing board cards code -->
+        </div>
     </div>
 </div>
 
-<div class="friend-boards-container">
-    <h3 class="section-title"><%= friend.username %>'s Boards</h3>
-    
-    <% if (boards && boards.length > 0) { %>
-        <div class="boards-grid">
-            <% boards.forEach(board => { %>
-                <a href="/boards/<%= board.board_id %>" class="board-card-link">
-                    <div class="board-card">
-                        <div class="board-thumbnail">
-                            <span class="board-thumbnail-icon">📁</span>
-                        </div>
-                        <div class="board-info">
-                            <h4 class="board-name"><%= board.board_name %></h4>
-                            <div class="board-meta">
-                                <span><%= board.pin_count || 0 %> pins</span>
-                            </div>
-                        </div>
-                    </div>
-                </a>
-            <% }); %>
-        </div>
-    <% } else { %>
-        <div class="empty-boards">
-            <h3><%= friend.username %> doesn't have any boards yet</h3>
-            <p>When they create boards, you'll see them here</p>
-        </div>
-    <% } %>
-    
-    <% if (error) { %>
-        <div class="error-message">
-            <p><%= error %></p>
-        </div>
-    <% } %>
-</div>
+<style>
+    /* Friend Profile Container */
+    .friend-profile-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 20px;
+    }
+
+    /* Profile Header */
+    .friend-profile-header {
+        position: relative;
+        margin-bottom: 60px;
+    }
+
+    .friend-profile-banner {
+        height: 180px;
+        background-color: #e60023;
+        border-radius: 16px;
+        margin-bottom: 60px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .banner-content {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    .back-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 6px 14px;
+        background-color: rgba(255, 255, 255, 0.2);
+        color: white;
+        border: none;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: normal;
+        text-decoration: none;
+        transition: background-color 0.2s;
+        line-height: 1;
+    }
+
+    .back-btn svg {
+        stroke: white;
+        width: 14px;
+        height: 14px;
+        display: block;
+        flex-shrink: 0;
+    }
+
+    .back-btn span {
+        display: inline-block;
+        vertical-align: middle;
+        line-height: 14px;
+    }
+
+    .friend-profile-info {
+        display: flex;
+        align-items: flex-end;
+        gap: 24px;
+        position: absolute;
+        bottom: -40px;
+        left: 30px;
+        z-index: 10;
+    }
+
+    .friend-profile-avatar {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        overflow: hidden;
+        border: 4px solid white;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        background-color: #f0f0f0;
+        margin-bottom: 10px;
+    }
+
+    .profile-avatar-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .profile-avatar-placeholder {
+        width: 100%;
+        height: 100%;
+        background-color: #fff;
+        color: #e60023;
+        font-size: 42px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .friend-profile-details {
+        padding-bottom: 10px;
+    }
+
+    .friend-profile-name {
+        font-size: 24px;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 8px;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        white-space: nowrap;
+        max-width: 300px;
+    }
+
+    .friend-profile-username {
+        font-size: 16px;
+        color: #666;
+        margin-bottom: 20px;
+    }
+
+    .friends-since {
+        font-size: 14px;
+        color: #666;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .dot {
+        display: inline-block;
+        width: 6px;
+        height: 6px;
+        background-color: #e60023;
+        border-radius: 50%;
+    }
+
+    /* Friend's Boards Section */
+    .friend-boards-section {
+        margin-top: 40px;
+    }
+
+    .boards-title {
+        font-size: 20px;
+        color: #333;
+        margin-bottom: 20px;
+        font-weight: 600;
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 768px) {
+        .friend-profile-banner {
+            height: 140px;
+            margin-bottom: 70px;
+        }
+
+        .friend-profile-info {
+            flex-direction: column;
+            align-items: center;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+        }
+
+        .friend-profile-avatar {
+            margin-bottom: 5px;
+        }
+
+        .friend-profile-details {
+            padding-bottom: 0;
+        }
+
+        .friend-profile-name {
+            max-width: 250px;
+        }
+    }
+</style>
