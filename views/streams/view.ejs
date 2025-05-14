@@ -1,17 +1,22 @@
 <div class="stream-header">
-    <h2><%= stream.stream_name %></h2>
-    <p>Your collection of inspiration boards</p>
-</div>
-
-<div class="stream-options">
-    <a href="#" class="add-board-btn">+ Add Board</a>
+    <div class="stream-title">
+        <h2><%= stream.stream_name %></h2>
+        <p>Your collection of inspiration boards</p>
+    </div>
+    
+    <% if (stream.user_id === user.user_id) { %>
+    <div class="stream-actions">
+        <a href="/streams/<%= stream.stream_id %>/add-board" class="add-board-btn">+ Add Board</a>
+        <button class="edit-stream-btn" onclick="openEditModal()">Edit Stream</button>
+    </div>
+    <% } %>
 </div>
 
 <div class="boards-grid">
     <% if (boards && boards.length > 0) { %>
         <% boards.forEach(board => { %>
-            <a href="/boards/<%= board.board_id %>" class="board-card-link">
-                <div class="board-card">
+            <div class="board-card">
+                <a href="/boards/<%= board.board_id %>" class="board-card-link">
                     <div class="board-thumbnail">
                         <span class="board-thumbnail-icon">📁</span>
                     </div>
@@ -24,14 +29,210 @@
                             <% } %>
                         </div>
                     </div>
-                </div>
-            </a>
+                </a>
+                
+                <% if (stream.user_id === user.user_id) { %>
+                    <form action="/streams/<%= stream.stream_id %>/remove-board" method="POST" class="remove-board-form">
+                        <input type="hidden" name="board_id" value="<%= board.board_id %>">
+                        <button type="submit" class="remove-board-btn" title="Remove from stream">×</button>
+                    </form>
+                <% } %>
+            </div>
         <% }) %>
     <% } else { %>
         <div class="empty-state">
             <h3>No boards in this stream yet</h3>
             <p>Add boards to this stream to get started</p>
-            <a href="#" class="add-board-btn">Add Your First Board</a>
+            <a href="/streams/<%= stream.stream_id %>/add-board" class="add-board-btn">Add Your First Board</a>
         </div>
     <% } %>
 </div>
+
+<!-- Edit Stream Modal -->
+<div id="editStreamModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Edit stream</h3>
+            <span class="close-modal" onclick="closeEditModal()">&times;</span>
+        </div>
+        
+        <form id="editStreamForm" action="/streams/<%= stream.stream_id %>/update" method="POST">
+            <div class="form-group">
+                <label for="streamName">Name</label>
+                <input type="text" id="streamName" name="stream_name" class="form-control" required value="<%= stream.stream_name %>">
+            </div>
+            
+            <div class="form-actions">
+                <button type="button" class="btn-danger" onclick="openDeleteModal()">Delete Stream</button>
+                <button type="button" class="btn-cancel" onclick="closeEditModal()">Cancel</button>
+                <button type="submit" class="btn-create">Update</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Delete Stream Confirmation Modal -->
+<div id="deleteStreamModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Delete stream?</h3>
+            <span class="close-modal" onclick="closeDeleteModal()">&times;</span>
+        </div>
+        
+        <div class="modal-body">
+            <p>Are you sure you want to delete "<%= stream.stream_name %>"? This action cannot be undone.</p>
+            
+            <div class="form-actions">
+                <button type="button" class="btn-cancel" onclick="closeDeleteModal()">Cancel</button>
+                <form action="/streams/<%= stream.stream_id %>/delete" method="POST" style="display: inline;">
+                    <button type="submit" class="btn-danger">Delete Stream</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .stream-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 30px;
+    }
+    
+    .stream-title h2 {
+        font-size: 28px;
+        color: #333;
+        margin-bottom: 5px;
+    }
+    
+    .stream-title p {
+        color: #666;
+    }
+    
+    .stream-actions {
+        display: flex;
+        gap: 10px;
+    }
+    
+    .edit-stream-btn {
+        padding: 10px 20px;
+        background-color: #f0f0f0;
+        color: #333;
+        border: none;
+        border-radius: 20px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: background-color 0.3s;
+    }
+    
+    .edit-stream-btn:hover {
+        background-color: #e0e0e0;
+    }
+    
+    .board-card {
+        position: relative;
+    }
+    
+    .board-card-link {
+        text-decoration: none;
+        color: inherit;
+        display: block;
+    }
+    
+    .remove-board-form {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 10;
+    }
+    
+    .remove-board-btn {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background-color: rgba(0, 0, 0, 0.5);
+        color: white;
+        border: none;
+        font-size: 20px;
+        line-height: 1;
+        cursor: pointer;
+        transition: background-color 0.3s;
+        opacity: 0;
+    }
+    
+    .board-card:hover .remove-board-btn {
+        opacity: 1;
+    }
+    
+    .remove-board-btn:hover {
+        background-color: rgba(230, 0, 35, 0.8);
+    }
+    
+    /* Delete button in modal */
+    .btn-danger {
+        padding: 12px 24px;
+        background-color: #dc3545;
+        color: white;
+        border: none;
+        border-radius: 24px;
+        font-size: 16px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background-color 0.3s;
+        margin-right: auto; /* Pushes other buttons to the right */
+    }
+    
+    .btn-danger:hover {
+        background-color: #bd2130;
+    }
+    
+    .modal-body {
+        padding: 24px;
+    }
+    
+    .modal-body p {
+        margin-bottom: 24px;
+        font-size: 16px;
+        color: #333;
+    }
+</style>
+
+<script>
+    // Edit Stream Modal
+    const editModal = document.getElementById('editStreamModal');
+    
+    function openEditModal() {
+        editModal.style.display = "block";
+        document.body.style.overflow = "hidden"; // Prevent scrolling
+    }
+    
+    function closeEditModal() {
+        editModal.style.display = "none";
+        document.body.style.overflow = "auto"; // Re-enable scrolling
+    }
+    
+    // Delete Stream Modal
+    const deleteModal = document.getElementById('deleteStreamModal');
+    
+    function openDeleteModal() {
+        editModal.style.display = "none"; // Hide edit modal
+        deleteModal.style.display = "block";
+        document.body.style.overflow = "hidden"; // Prevent scrolling
+    }
+    
+    function closeDeleteModal() {
+        deleteModal.style.display = "none";
+        document.body.style.overflow = "auto"; // Re-enable scrolling
+    }
+    
+    // Close modals when clicking outside
+    window.addEventListener('click', function(event) {
+        if (event.target == editModal) {
+            closeEditModal();
+        }
+        if (event.target == deleteModal) {
+            closeDeleteModal();
+        }
+    });
+</script>

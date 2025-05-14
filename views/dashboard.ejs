@@ -28,10 +28,33 @@
                                         <rect x="14" y="14" width="7" height="7" rx="1"></rect>
                                         <rect x="3" y="14" width="7" height="7" rx="1"></rect>
                                     </svg>
-                                    0 boards <!-- placeholder for now -->
+                                    <!-- Calculate board count from the data returned by getStreamWithBoards -->
+                                    <% 
+                                        const creationDate = new Date(stream.creation_date);
+                                        const now = new Date();
+                                        const diffTime = Math.abs(now - creationDate);
+                                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                                        let timeDisplay = '';
+                                        
+                                        if (diffDays < 1) {
+                                            timeDisplay = 'Today';
+                                        } else if (diffDays === 1) {
+                                            timeDisplay = 'Yesterday';
+                                        } else if (diffDays < 7) {
+                                            timeDisplay = `${diffDays} days ago`;
+                                        } else if (diffDays < 30) {
+                                            const weeks = Math.floor(diffDays / 7);
+                                            timeDisplay = `${weeks} ${weeks === 1 ? 'week' : 'weeks'} ago`;
+                                        } else {
+                                            const months = Math.floor(diffDays / 30);
+                                            timeDisplay = `${months} ${months === 1 ? 'month' : 'months'} ago`;
+                                        }
+                                    %>
+                                    <!-- Placeholder - this will be filled in properly with actual data -->
+                                    - boards
                                 </span>
                                 <span>•</span>
-                                <span>Just created</span> <!-- placeholder for now -->
+                                <span><%= timeDisplay %></span>
                             </div>
                         </div>
                     </div>
@@ -67,9 +90,14 @@
                 <input type="text" id="streamName" name="stream_name" class="form-control" required placeholder="Like 'Design Inspiration' or 'Travel Ideas'">
             </div>
             
-            <div class="form-group">
-                <label for="streamDescription">Description (optional)</label>
-                <textarea id="streamDescription" name="description" class="form-control" rows="3" placeholder="What kind of content will you follow in this stream?"></textarea>
+            <div class="form-helpers">
+                <p class="privacy-note">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                    </svg>
+                    Streams are private and only visible to you
+                </p>
             </div>
             
             <div class="form-actions">
@@ -79,6 +107,24 @@
         </form>
     </div>
 </div>
+
+<style>
+    .privacy-note {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #666;
+        font-size: 14px;
+        margin-top: 20px;
+        background-color: #f0f0f0;
+        padding: 12px;
+        border-radius: 8px;
+    }
+    
+    .form-helpers {
+        margin-top: 20px;
+    }
+</style>
 
 <script>
     // Get the modal

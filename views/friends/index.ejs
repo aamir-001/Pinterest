@@ -1,0 +1,93 @@
+<div class="friends-header">
+    <div class="friends-title">
+        <h2>Friends</h2>
+        <p>Manage your friends and pending requests</p>
+    </div>
+    <div class="friends-actions">
+        <a href="/friends/search" class="add-friend-btn">+ Find Friends</a>
+    </div>
+</div>
+
+<% if (pendingRequests && pendingRequests.length > 0) { %>
+<section class="pending-requests-section">
+    <h3 class="section-title">Friend Requests (<%= pendingRequests.length %>)</h3>
+    
+    <div class="friend-requests-list">
+        <% pendingRequests.forEach(request => { %>
+            <div class="friend-request-card">
+                <div class="friend-request-info">
+                    <div class="friend-avatar">
+                        <% if (request.profile_picture_url) { %>
+                            <img src="<%= request.profile_picture_url %>" alt="<%= request.username %>" class="avatar-img">
+                        <% } else { %>
+                            <div class="avatar-placeholder">
+                                <%= request.username.charAt(0).toUpperCase() %>
+                            </div>
+                        <% } %>
+                    </div>
+                    
+                    <div class="friend-details">
+                        <h4 class="friend-name"><%= request.display_name || request.username %></h4>
+                        <p class="friend-username">@<%= request.username %></p>
+                    </div>
+                </div>
+                
+                <div class="friend-request-actions">
+                    <form action="/friends/accept" method="POST" class="inline-form">
+                        <input type="hidden" name="user_id" value="<%= request.user_id %>">
+                        <button type="submit" class="btn-accept">Accept</button>
+                    </form>
+                    
+                    <form action="/friends/reject" method="POST" class="inline-form">
+                        <input type="hidden" name="user_id" value="<%= request.user_id %>">
+                        <button type="submit" class="btn-reject">Reject</button>
+                    </form>
+                </div>
+            </div>
+        <% }); %>
+    </div>
+</section>
+<% } %>
+
+<section class="friends-section">
+    <h3 class="section-title">Your Friends (<%= friends.length %>)</h3>
+    
+    <% if (friends && friends.length > 0) { %>
+        <div class="friends-grid">
+            <% friends.forEach(friend => { %>
+                <a href="/friends/view/<%= friend.user_id %>" class="friend-card-link">
+                    <div class="friend-card">
+                        <div class="friend-avatar">
+                            <% if (friend.profile_picture_url) { %>
+                                <img src="<%= friend.profile_picture_url %>" alt="<%= friend.username %>" class="avatar-img">
+                            <% } else { %>
+                                <div class="avatar-placeholder">
+                                    <%= friend.username.charAt(0).toUpperCase() %>
+                                </div>
+                            <% } %>
+                        </div>
+                        
+                        <div class="friend-info">
+                            <h4 class="friend-name"><%= friend.display_name || friend.username %></h4>
+                            <p class="friend-username">@<%= friend.username %></p>
+                            <p class="friend-since">Friends since <%= new Date(friend.acceptance_date).toLocaleDateString() %></p>
+                        </div>
+                    </div>
+                </a>
+            <% }); %>
+        </div>
+    <% } else { %>
+        <div class="empty-friends">
+            <img src="/api/placeholder/100/100" alt="Friends" class="empty-friends-icon">
+            <h3>You don't have any friends yet</h3>
+            <p>Find users and send friend requests to connect with others</p>
+            <a href="/friends/search" class="add-friend-btn">Find Friends</a>
+        </div>
+    <% } %>
+</section>
+
+<% if (error) { %>
+    <div class="error-message">
+        <p><%= error %></p>
+    </div>
+<% } %>

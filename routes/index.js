@@ -137,5 +137,32 @@ router.get('/search', async (req, res) => {
 });
 
 
+// Dashboard page (only for authenticated users)
+router.get('/dashboard', ensureAuthenticated, async (req, res) => {
+  try {
+    const streamResult = await getUserFollowStreams(req.user.user_id);
+    const pendingRequestsResult = await getPendingFriendRequests(req.user.user_id);
+    
+    res.render('dashboard', { 
+      user: req.user,
+      title: 'Dashboard',
+      currentPage: 'dashboard',
+      streams: streamResult.success ? streamResult.streams : [],
+      streamError: !streamResult.success ? streamResult.message : null,
+      pendingRequests: pendingRequestsResult.success ? pendingRequestsResult.requests : []
+    });
+  } catch (error) {
+    console.error('Dashboard error:', error);
+    res.render('dashboard', { 
+      user: req.user,
+      title: 'Dashboard',
+      currentPage: 'dashboard',
+      streams: [],
+      streamError: 'Failed to load follow streams',
+      pendingRequests: []
+    });
+  }
+});
+
 
 module.exports = router;
