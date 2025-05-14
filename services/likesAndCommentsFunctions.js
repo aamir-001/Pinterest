@@ -177,9 +177,61 @@ async function getComments(pinId) {
   }
 }
 
+
+/**
+ * Delete a comment
+ * @param {number} commentId - ID of the comment to delete
+ * @param {number} userId - User ID of the person trying to delete the comment
+ * @returns {Promise<Object>} - Result of the deletion operation
+ */
+async function deleteComment(commentId, userId) {
+  try {
+    // First check if the comment exists and belongs to the user
+    const checkResult = await pool.query(
+      'SELECT c.*, p.board_id, b.user_id AS board_owner_id FROM Comments c JOIN Pins p ON c.pin_id = p.pin_id JOIN Boards b ON p.board_id = b.board_id WHERE c.comment_id = $1',
+      [commentId]
+    );
+    
+    if (checkResult.rows.length === 0) {
+      return {
+        success: false,
+        message: 'Comment not found'
+      };
+    }
+    
+    const comment = checkResult.rows[0];
+    
+    // Check if user is the comment author or the board owner
+    if (comment.user_id !== userId && comment.board_owner_id !== userId) {
+      return {
+        success: false,
+        message: 'You do not have permission to delete this comment'
+      };
+    }
+    
+    // Delete the comment
+    await pool.query(
+      'DELETE FROM Comments WHERE comment_id = $1',
+      [commentId]
+    );
+    
+    return {
+      success: true,
+      message: 'Comment deleted successfully'
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: `Failed to delete comment: ${error.message}`
+    };
+  }
+}
+
+// Add this to your exports
 module.exports = {
   likePicture,
   unlikePicture,
   addComment,
-  getComments
+  getComments,
+  deleteComment  // Add this line
 };

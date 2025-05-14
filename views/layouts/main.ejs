@@ -2228,6 +2228,160 @@ body > .close-modal,
     color: #999;
     cursor: not-allowed;
 }
+
+.pin-actions {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 10;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.pin-card:hover .pin-actions {
+    opacity: 1;
+}
+
+.delete-pin-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: rgba(0, 0, 0, 0.5);
+    color: white;
+    border: none;
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.delete-pin-btn:hover {
+    background-color: rgba(230, 0, 35, 0.8);
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
+.delete-board-btn {
+    padding: 10px 20px;
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s;
+}
+
+.delete-board-btn:hover {
+    background-color: #bd2130;
+}
+
+.delete-warning {
+    color: #dc3545;
+    font-weight: 500;
+    margin-top: 8px;
+}
+
+.btn-danger {
+    padding: 12px 24px;
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 24px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.btn-danger:hover {
+    background-color: #bd2130;
+}
+
+.board-card {
+    position: relative;
+}
+
+.board-actions {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    gap: 10px;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.board-card:hover .board-actions {
+    opacity: 1;
+}
+
+.board-actions .edit-board-btn,
+.board-actions .delete-board-btn {
+    padding: 6px 12px;
+    font-size: 12px;
+}
+
+
+.comment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.comment-author {
+    font-weight: 600;
+    color: #333;
+    display: flex;
+    align-items: center;
+}
+
+.comment-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.comment-date {
+    font-size: 12px;
+    color: #767676;
+}
+
+.delete-comment-btn {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background-color: transparent;
+    color: #999;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    transition: color 0.2s, background-color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.delete-comment-btn:hover {
+    color: #e60023;
+    background-color: rgba(230, 0, 35, 0.1);
+}
+
+
     </style>
 </head>
 <body>

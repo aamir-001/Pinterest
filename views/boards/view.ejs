@@ -8,7 +8,30 @@
         <a href="#" class="add-pin-btn">+ Add Pin</a>
         <% if (user.user_id === board.user_id) { %>
             <button class="edit-board-btn">Edit</button>
+            <button class="delete-board-btn" onclick="openDeleteBoardModal()">Delete</button>
         <% } %>
+    </div>
+</div>
+
+<!-- Add this modal for confirming board deletion -->
+<div id="deleteBoardModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Delete board?</h3>
+            <span class="close-modal" onclick="closeDeleteBoardModal()">&times;</span>
+        </div>
+        
+        <div class="modal-body">
+            <p>Are you sure you want to delete "<%= board.board_name %>"? This will permanently delete all pins on this board.</p>
+            <p class="delete-warning">This action cannot be undone.</p>
+            
+            <div class="form-actions">
+                <button type="button" class="btn-cancel" onclick="closeDeleteBoardModal()">Cancel</button>
+                <form action="/boards/<%= board.board_id %>/delete" method="POST" style="display: inline;">
+                    <button type="submit" class="btn-danger">Delete Board</button>
+                </form>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -29,6 +52,22 @@
                             <span><%= pin.comment_count %> comments</span>
                         </div>
                     </div>
+
+                    <% if (user.user_id === board.user_id) { %>
+                    <div class="pin-actions">
+                        <form action="/pins/<%= pin.pin_id %>/delete?boardId=<%= board.board_id %>" method="POST" class="delete-pin-form">
+                            <button type="submit" class="delete-pin-btn" title="Delete Pin" onclick="return confirm('Are you sure you want to delete this pin?');">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                    <line x1="10" y1="11" x2="10" y2="17"></line>
+                                    <line x1="14" y1="11" x2="14" y2="17"></line>
+                                </svg>
+                                <span class="sr-only">Delete</span>
+                            </button>
+                        </form>
+                    </div>
+                <% } %>
                 </div>
             <% }); %>
         </div>
@@ -454,7 +493,7 @@ document.getElementById('likeButton').addEventListener('click', function() {
     
     // Function to load comments
     // Function to load comments
-    function loadComments(pinId) {
+     function loadComments(pinId) {
         fetch(`/pins/${pinId}/comments`)
         .then(response => response.json())
         .then(data => {
@@ -465,8 +504,13 @@ document.getElementById('likeButton').addEventListener('click', function() {
                 data.comments.forEach(comment => {
                     const commentEl = document.createElement('div');
                     commentEl.className = 'comment';
+                    commentEl.setAttribute('data-comment-id', comment.comment_id);
                     
                     const initial = comment.username ? comment.username.charAt(0).toUpperCase() : 'U';
+                    
+                    // Check if the current user can delete this comment
+                    const currentUserId = <%= user.user_id %>;
+                    const canDelete = comment.user_id === currentUserId || <%= board.user_id %> === currentUserId;
                     
                     commentEl.innerHTML = `
                         <div class="comment-header">
@@ -474,7 +518,17 @@ document.getElementById('likeButton').addEventListener('click', function() {
                                 <div class="user-avatar">${initial}</div>
                                 <span>${comment.username || 'User'}</span>
                             </div>
-                            <span class="comment-date">${formatDate(new Date(comment.comment_date))}</span>
+                            <div class="comment-actions">
+                                <span class="comment-date">${formatDate(new Date(comment.comment_date))}</span>
+                                ${canDelete ? `
+                                <button class="delete-comment-btn" onclick="deleteComment(${comment.comment_id}, event)">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="3 6 5 6 21 6"></polyline>
+                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                    </svg>
+                                </button>
+                                ` : ''}
+                            </div>
                         </div>
                         <div class="comment-content">${comment.content}</div>
                     `;
@@ -491,6 +545,56 @@ document.getElementById('likeButton').addEventListener('click', function() {
         });
     }
     
+    // Function to delete a comment
+    function deleteComment(commentId, event) {
+        event.preventDefault();
+        
+        if (!confirm('Are you sure you want to delete this comment?')) {
+            return;
+        }
+        
+        fetch(`/pins/comments/${commentId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Remove the comment from the DOM
+                const commentEl = document.querySelector(`.comment[data-comment-id="${commentId}"]`);
+                if (commentEl) {
+                    commentEl.remove();
+                }
+                
+                // Update comment count in the pin card
+                const pinId = document.getElementById('pinIdInput').value;
+                const pinCard = document.querySelector(`.pin-card[data-pin-id="${pinId}"]`);
+                if (pinCard) {
+                    const commentCountEl = pinCard.querySelector('.pin-meta span:nth-child(2)');
+                    if (commentCountEl) {
+                        const currentCount = parseInt(commentCountEl.textContent) || 0;
+                        commentCountEl.textContent = `${Math.max(0, currentCount - 1)} comments`;
+                    }
+                }
+                
+                // If there are no comments left, show the "no comments" message
+                const commentsContainer = document.getElementById('commentsContainer');
+                if (commentsContainer.children.length === 0) {
+                    commentsContainer.innerHTML = '<p class="no-comments">No comments yet. Be the first to comment!</p>';
+                }
+            } else {
+                alert('Error deleting comment: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error deleting comment:', error);
+            alert('Failed to delete comment. Please try again.');
+        });
+    }
+        
     // Helper function to format dates
     function formatDate(date) {
         const now = new Date();
@@ -907,5 +1011,26 @@ function isValidUrl(string) {
     }
 }
 
+
+// Add these functions to the script section at the bottom of the board view page
+function openDeleteBoardModal() {
+    const modal = document.getElementById('deleteBoardModal');
+    modal.style.display = "block";
+    document.body.style.overflow = "hidden"; // Prevent scrolling
+}
+
+function closeDeleteBoardModal() {
+    const modal = document.getElementById('deleteBoardModal');
+    modal.style.display = "none";
+    document.body.style.overflow = "auto"; // Re-enable scrolling
+}
+
+// Close modal when clicking outside of it
+window.addEventListener('click', function(event) {
+    const modal = document.getElementById('deleteBoardModal');
+    if (event.target == modal) {
+        closeDeleteBoardModal();
+    }
+});
 
 </script>

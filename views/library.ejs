@@ -12,8 +12,8 @@
     <% if (typeof boards !== 'undefined' && boards && boards.length > 0) { %>
         <div class="boards-grid">
             <% boards.forEach(board => { %>
-                <a href="/boards/<%= board.board_id %>" class="board-card-link">
-                    <div class="board-card">
+                <div class="board-card">
+                    <a href="/boards/<%= board.board_id %>" class="board-card-link">
                         <div class="board-thumbnail">
                             <span class="board-thumbnail-icon">📁</span>
                         </div>
@@ -26,8 +26,12 @@
                                 <% } %>
                             </div>
                         </div>
+                    </a>
+                    <div class="board-actions">
+                        <button class="edit-board-btn" onclick="editBoard(<%= board.board_id %>)">Edit</button>
+                        <button class="delete-board-btn" onclick="confirmDeleteBoard(<%= board.board_id %>, '<%= board.board_name.replace(/'/g, "\\'") %>')">Delete</button>
                     </div>
-                </a>
+                </div>
             <% }); %>
         </div>
     <% } else { %>
@@ -78,9 +82,149 @@
     </div>
 </div>
 
+<!-- Edit Board Modal -->
+<div id="editBoardModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Edit board</h3>
+            <span class="close-modal" onclick="closeEditModal()">&times;</span>
+        </div>
+        
+        <form id="editBoardForm" action="/boards/0/update" method="POST">
+            <div class="form-group">
+                <label for="editBoardName">Name</label>
+                <input type="text" id="editBoardName" name="board_name" class="form-control" required placeholder="Like 'Places to Go' or 'Recipes to Make'">
+            </div>
+            
+            <div class="form-group">
+                <label for="editBoardDescription">Description</label>
+                <textarea id="editBoardDescription" name="description" class="form-control" rows="3" placeholder="What's your board about?"></textarea>
+            </div>
+            
+            <div class="form-group checkbox-group">
+                <input type="checkbox" id="editFriendsOnlyComments" name="friends_only_comments" value="true">
+                <label for="editFriendsOnlyComments">Only allow friends to comment</label>
+            </div>
+            
+            <div class="form-actions">
+                <button type="button" class="btn-cancel" onclick="closeEditModal()">Cancel</button>
+                <button type="submit" class="btn-update">Update</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Delete Board Confirmation Modal -->
+<div id="deleteBoardModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Delete board?</h3>
+            <span class="close-modal" onclick="closeDeleteBoardModal()">&times;</span>
+        </div>
+        
+        <div class="modal-body">
+            <p id="deleteBoardMessage">Are you sure you want to delete this board? This will permanently delete all pins on this board.</p>
+            <p class="delete-warning">This action cannot be undone.</p>
+            
+            <div class="form-actions">
+                <button type="button" class="btn-cancel" onclick="closeDeleteBoardModal()">Cancel</button>
+                <form id="deleteBoardForm" action="/boards/0/delete" method="POST" style="display: inline;">
+                    <button type="submit" class="btn-danger">Delete Board</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .board-card {
+        position: relative;
+    }
+
+    .board-actions {
+        position: absolute;
+        bottom: 20px;
+        right: 20px;
+        display: flex;
+        gap: 10px;
+        opacity: 0;
+        transition: opacity 0.2s;
+    }
+
+    .board-card:hover .board-actions {
+        opacity: 1;
+    }
+
+    .board-actions .edit-board-btn,
+    .board-actions .delete-board-btn {
+        padding: 6px 12px;
+        font-size: 12px;
+        border-radius: 16px;
+    }
+
+    .board-actions .delete-board-btn {
+        background-color: #dc3545;
+        color: white;
+    }
+
+    .board-actions .delete-board-btn:hover {
+        background-color: #bd2130;
+    }
+
+    .delete-warning {
+        color: #dc3545;
+        font-weight: 500;
+        margin-top: 8px;
+    }
+
+    .btn-danger {
+        padding: 12px 24px;
+        background-color: #dc3545;
+        color: white;
+        border: none;
+        border-radius: 24px;
+        font-size: 16px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+
+    .btn-danger:hover {
+        background-color: #bd2130;
+    }
+
+    .modal-body {
+        padding: 24px;
+    }
+
+    .modal-body p {
+        margin-bottom: 24px;
+        font-size: 16px;
+        color: #333;
+    }
+
+    .btn-update {
+        padding: 12px 24px;
+        background-color: #e60023;
+        color: white;
+        border: none;
+        border-radius: 24px;
+        font-size: 16px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+
+    .btn-update:hover {
+        background-color: #ad1219;
+    }
+</style>
+
 <script>
     // Get the modal
     const modal = document.getElementById('createBoardModal');
+    const editModal = document.getElementById('editBoardModal');
+    const deleteModal = document.getElementById('deleteBoardModal');
     
     // Get all buttons that open the modal (there could be multiple)
     const createBtns = document.querySelectorAll('.create-board-btn');
@@ -107,11 +251,70 @@
         if (event.target == modal) {
             closeModal();
         }
+        if (event.target == editModal) {
+            closeEditModal();
+        }
+        if (event.target == deleteModal) {
+            closeDeleteBoardModal();
+        }
     });
     
     // Close modal function
     function closeModal() {
         modal.style.display = "none";
+        document.body.style.overflow = "auto"; // Re-enable scrolling
+    }
+
+    // Edit board function
+    async function editBoard(boardId) {
+        try {
+            // Fetch board details
+            const response = await fetch(`/boards/${boardId}/details`);
+            const data = await response.json();
+            
+            if (data.success) {
+                const board = data.board;
+                
+                // Fill the form with board details
+                document.getElementById('editBoardName').value = board.board_name;
+                document.getElementById('editBoardDescription').value = board.description || '';
+                document.getElementById('editFriendsOnlyComments').checked = board.friends_only_comments;
+                
+                // Update form action
+                document.getElementById('editBoardForm').action = `/boards/${boardId}/update`;
+                
+                // Show the modal
+                editModal.style.display = "block";
+                document.body.style.overflow = "hidden"; // Prevent scrolling
+            } else {
+                alert('Failed to get board details: ' + data.message);
+            }
+        } catch (error) {
+            console.error('Error fetching board details:', error);
+            alert('Failed to get board details');
+        }
+    }
+
+    // Close edit modal function
+    function closeEditModal() {
+        editModal.style.display = "none";
+        document.body.style.overflow = "auto"; // Re-enable scrolling
+    }
+
+    // Delete board functions
+    function confirmDeleteBoard(boardId, boardName) {
+        const messageEl = document.getElementById('deleteBoardMessage');
+        const formEl = document.getElementById('deleteBoardForm');
+        
+        messageEl.textContent = `Are you sure you want to delete "${boardName}"? This will permanently delete all pins on this board.`;
+        formEl.action = `/boards/${boardId}/delete`;
+        
+        deleteModal.style.display = "block";
+        document.body.style.overflow = "hidden"; // Prevent scrolling
+    }
+
+    function closeDeleteBoardModal() {
+        deleteModal.style.display = "none";
         document.body.style.overflow = "auto"; // Re-enable scrolling
     }
 </script>

@@ -4,9 +4,9 @@ const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
 const { ensureAuthenticated } = require('../config/auth');
-const { pinPicture, repinPicture } = require('../services/pinboardService');
+const { pinPicture, repinPicture, deletePinnedPicture } = require('../services/pinboardService');
 const pool = require('../db');
-const { likePicture, unlikePicture, addComment, getComments } = require('../services/likesAndCommentsFunctions');
+const { likePicture, unlikePicture, addComment, getComments, deleteComment } = require('../services/likesAndCommentsFunctions');
 // const fetch = require('node-fetch');
 
 // Configure multer for file uploads
@@ -374,4 +374,139 @@ router.post('/repin', ensureAuthenticated, async (req, res) => {
         }
     }
 });
+
+
+// Add this to routes/pins.js
+router.delete('/:pinId', ensureAuthenticated, async (req, res) => {
+    try {
+        const pinId = req.params.pinId;
+        const userId = req.user.user_id;
+        
+        // Call the existing deletePinnedPicture function
+        const result = await deletePinnedPicture(pinId, userId);
+        
+        if (result.success) {
+            if (req.xhr || req.headers.accept.indexOf('json') > -1) {
+                // If it's an AJAX request, return JSON
+                return res.json(result);
+            } else {
+                // If it's a regular form submission, redirect
+                req.flash('success_msg', result.message);
+                return res.redirect('/library');
+            }
+        } else {
+            if (req.xhr || req.headers.accept.indexOf('json') > -1) {
+                return res.status(400).json(result);
+            } else {
+                req.flash('error_msg', result.message);
+                return res.redirect('back');
+            }
+        }
+    } catch (error) {
+        console.error('Error deleting pin:', error);
+        if (req.xhr || req.headers.accept.indexOf('json') > -1) {
+            return res.status(500).json({
+                success: false,
+                message: 'Failed to delete pin'
+            });
+        } else {
+            req.flash('error_msg', 'Failed to delete pin');
+            return res.redirect('back');
+        }
+    }
+});
+
+// Add this to routes/pins.js as well
+router.post('/:pinId/delete', ensureAuthenticated, async (req, res) => {
+    try {
+        const pinId = req.params.pinId;
+        const userId = req.user.user_id;
+        
+        // Call the existing deletePinnedPicture function
+        const result = await deletePinnedPicture(pinId, userId);
+        
+        if (result.success) {
+            req.flash('success_msg', result.message);
+        } else {
+            req.flash('error_msg', result.message);
+        }
+        
+        // If returnTo was specified in query params, redirect there
+        if (req.query.returnTo) {
+            return res.redirect(req.query.returnTo);
+        }
+        
+        // Otherwise, try to redirect to the board or default to library
+        const boardId = req.query.boardId;
+        if (boardId) {
+            return res.redirect(`/boards/${boardId}`);
+        } else {
+            return res.redirect('/library');
+        }
+    } catch (error) {
+        console.error('Error deleting pin:', error);
+        req.flash('error_msg', 'Failed to delete pin');
+        return res.redirect(req.query.returnTo || '/library');
+    }
+});
+
+// Delete a comment
+router.post('/comments/:commentId/delete', ensureAuthenticated, async (req, res) => {
+    try {
+        const commentId = req.params.commentId;
+        const userId = req.user.user_id;
+        
+        // Get the return URL for redirection
+        const returnUrl = req.body.returnUrl || req.query.returnUrl || req.headers.referer || '/library';
+        
+        // Call the service function to delete the comment
+        const result = await deleteComment(commentId, userId);
+        
+        if (req.xhr || req.headers.accept.indexOf('json') > -1) {
+            // If it's an AJAX request, return JSON
+            return res.json(result);
+        } else {
+            // If it's a form submission, set a flash message and redirect
+            if (result.success) {
+                req.flash('success_msg', result.message);
+            } else {
+                req.flash('error_msg', result.message);
+            }
+            
+            return res.redirect(returnUrl);
+        }
+    } catch (error) {
+        console.error('Error deleting comment:', error);
+        
+        if (req.xhr || req.headers.accept.indexOf('json') > -1) {
+            return res.status(500).json({
+                success: false,
+                message: 'Failed to delete comment'
+            });
+        } else {
+            req.flash('error_msg', 'Failed to delete comment');
+            return res.redirect(req.headers.referer || '/library');
+        }
+    }
+});
+
+// For API/AJAX requests
+router.delete('/comments/:commentId', ensureAuthenticated, async (req, res) => {
+    try {
+        const commentId = req.params.commentId;
+        const userId = req.user.user_id;
+        
+        // Call the service function to delete the comment
+        const result = await deleteComment(commentId, userId);
+        
+        return res.json(result);
+    } catch (error) {
+        console.error('Error deleting comment:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Failed to delete comment'
+        });
+    }
+});
+
 module.exports = router;
