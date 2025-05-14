@@ -1,5 +1,6 @@
 const pool = require('../db');
 
+
 /**
  * Add a like to a picture
  * @param {number} userId - User ID of the person liking the picture

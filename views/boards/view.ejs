@@ -16,11 +16,11 @@
     <% if (pins && pins.length > 0) { %>
         <div class="pins-grid">
             <% pins.forEach(pin => { %>
-                <div class="pin-card">
+                <div class="pin-card" data-pin-id="<%= pin.pin_id %>">
                     <div class="pin-image-container">
                         <img src="<%= pin.system_url %>" alt="<%= pin.description || 'Pin' %>" 
-                             class="pin-image" 
-                             onerror="this.onerror=null; this.src='/images/pin-placeholder.jpg';">
+                            class="pin-image" 
+                            onerror="this.onerror=null; this.src='/images/pin-placeholder.jpg';">
                     </div>
                     <div class="pin-info">
                         <p class="pin-description"><%= pin.description %></p>
@@ -94,7 +94,7 @@
                     
                     <div class="pin-detail-meta">
                         <button id="likeButton" class="like-button">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="like-icon">
                                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                             </svg>
                             <span id="likeCount">0</span> likes
@@ -192,22 +192,67 @@
     document.querySelectorAll('.pin-card').forEach(card => {
         card.addEventListener('click', function() {
             const pinId = this.getAttribute('data-pin-id');
-            const imgSrc = this.querySelector('.pin-image').src;
-            const description = this.querySelector('.pin-description').textContent;
-            const likes = this.querySelector('.pin-meta span:first-child').textContent;
             
-            // Set modal content
-            pinDetailImage.src = imgSrc;
-            pinDetailDescription.textContent = description;
-            likeCount.textContent = likes.split(' ')[0]; // Extract the number
-            pinIdInput.value = pinId;
+            // Check if pinId is valid
+            if (!pinId || pinId === 'null' || pinId === 'undefined') {
+                console.error('Invalid pin ID:', pinId);
+                alert('Error: Invalid pin ID');
+                return;
+            }
             
-            // Load comments
-            loadComments(pinId);
-            
-            // Show modal
+            // Show loading state
             pinDetailModal.style.display = 'block';
             document.body.style.overflow = 'hidden'; // Prevent scrolling
+            pinDetailImage.src = ''; // Clear previous image
+            pinDetailDescription.textContent = 'Loading...';
+            likeCount.textContent = '0';
+            document.getElementById('commentsContainer').innerHTML = '<p class="no-comments">Loading comments...</p>';
+            
+            // Get pin details including like status
+            fetch(`/pins/${pinId}/details`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    const pin = data.pin;
+                    
+                    // Set modal content
+                    pinDetailImage.src = pin.system_url;
+                    pinDetailDescription.textContent = pin.description;
+                    likeCount.textContent = pin.like_count;
+                    pinIdInput.value = pinId;
+                    
+                    // Set like button state
+                    const likeButton = document.getElementById('likeButton');
+                    if (pin.user_liked) {
+                        likeButton.classList.add('active');
+                        likeButton.querySelector('svg').style.fill = '#e60023';
+                        likeButton.querySelector('svg').style.stroke = '#e60023';
+                    } else {
+                        likeButton.classList.remove('active');
+                        likeButton.querySelector('svg').style.fill = 'none';
+                        likeButton.querySelector('svg').style.stroke = 'currentColor';
+                    }
+                    
+                    // Load comments
+                    loadComments(pinId);
+                } else {
+                    console.error('Error in pin details response:', data);
+                    alert('Error loading pin details');
+                    pinDetailModal.style.display = 'none';
+                    document.body.style.overflow = 'auto';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading pin details:', error);
+                alert('Error loading pin details');
+                pinDetailModal.style.display = 'none';
+                document.body.style.overflow = 'auto';
+            });
         });
     });
     
@@ -226,15 +271,16 @@
     });
     
     // Handle comment submission
-    document.getElementById('commentForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        const pinId = pinIdInput.value;
-        const comment = document.getElementById('commentText').value;
-        
-        if (!comment.trim()) return;
-        
-        // Send comment to server
+    // Handle comment submission
+document.getElementById('commentForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const pinId = document.getElementById('pinIdInput').value;
+    const comment = document.getElementById('commentText').value;
+    
+    if (!comment.trim()) return;
+    
+    // Send comment to server
         fetch('/pins/comment', {
             method: 'POST',
             headers: {
@@ -250,43 +296,85 @@
             if (data.success) {
                 // Clear the form
                 document.getElementById('commentText').value = '';
-                // Reload comments
+                
+                // Reload comments to show the new comment
                 loadComments(pinId);
+                
+                // Update the comment count in the pin card
+                const pinCard = document.querySelector(`.pin-card[data-pin-id="${pinId}"]`);
+                if (pinCard) {
+                    const commentCountElem = pinCard.querySelector('.pin-meta span:nth-child(2)');
+                    if (commentCountElem) {
+                        const currentCount = parseInt(commentCountElem.textContent) || 0;
+                        commentCountElem.textContent = `${currentCount + 1} comments`;
+                    }
+                }
             } else {
                 alert('Error posting comment: ' + data.message);
             }
         })
         .catch(error => {
             console.error('Error posting comment:', error);
+            alert('Error posting comment. Please try again.');
         });
     });
     
+    
     // Like button functionality
-    document.getElementById('likeButton').addEventListener('click', function() {
-        const pinId = pinIdInput.value;
-        
-        fetch('/pins/like', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                pin_id: pinId
-            })
+document.getElementById('likeButton').addEventListener('click', function() {
+    const pinId = pinIdInput.value;
+    const likeButton = this;
+    const likeIcon = likeButton.querySelector('svg');
+    const currentLikes = parseInt(likeCount.textContent);
+    
+    fetch('/pins/like', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            pin_id: pinId
         })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Update like count
-                likeCount.textContent = data.likeCount;
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update like count
+            likeCount.textContent = data.likeCount;
+            
+            // Toggle button appearance
+            if (data.liked) {
+                likeButton.classList.add('active');
+                likeIcon.style.fill = '#e60023';
+                likeIcon.style.stroke = '#e60023';
+                
+                // Animate the heart
+                likeIcon.style.transform = 'scale(1.2)';
+                setTimeout(() => {
+                    likeIcon.style.transform = 'scale(1)';
+                }, 200);
             } else {
-                alert('Error liking pin: ' + data.message);
+                likeButton.classList.remove('active');
+                likeIcon.style.fill = 'none';
+                likeIcon.style.stroke = 'currentColor';
             }
-        })
-        .catch(error => {
-            console.error('Error liking pin:', error);
-        });
+            
+            // Update the like count in the pin card on the board page
+            const pinCard = document.querySelector(`.pin-card[data-pin-id="${pinId}"]`);
+            if (pinCard) {
+                const pinLikeCount = pinCard.querySelector('.pin-meta span:first-child');
+                if (pinLikeCount) {
+                    pinLikeCount.textContent = `${data.likeCount} likes`;
+                }
+            }
+        } else {
+            alert('Error liking pin: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error liking pin:', error);
     });
+});
     
     // Function to load comments
     // Function to load comments

@@ -1613,6 +1613,82 @@
                 border-top: 1px solid #eee;
             }
         }
+
+        /* Active like button state */
+.like-button.active {
+    color: #e60023;
+}
+
+.like-button.active svg {
+    stroke: #e60023;
+    fill: #e60023;
+}
+
+/* Animation for like button */
+.like-button svg {
+    transition: transform 0.2s, fill 0.2s, stroke 0.2s;
+}
+
+.like-button svg {
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* bouncy animation */
+    stroke-width: 1.5px;
+}
+
+.like-button.active svg {
+    stroke: #e60023;
+    fill: #e60023;
+}
+
+.comment-form textarea:focus {
+    border-color: #e60023;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(230, 0, 35, 0.1);
+}
+
+/* Fix for stray close button */
+body > .close-modal,
+.close-modal:not(.modal .close-modal) {
+    display: none !important;
+}
+
+/* Proper modal header and close button positioning */
+.modal-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #fff;
+    position: relative; /* Change from absolute to relative */
+    top: auto;         /* Remove absolute positioning */
+    right: auto;       /* Remove absolute positioning */
+    z-index: 10;
+}
+
+/* Pin detail modal header positioning */
+.pin-detail-modal .modal-header {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    padding: 0;
+    border-bottom: none;
+    background-color: transparent;
+}
+
+/* Ensure close button is properly contained */
+.close-modal {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background-color: rgba(0, 0, 0, 0.5);
+    color: white;
+    border-radius: 50%;
+    font-size: 24px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
     </style>
 </head>
 <body>
