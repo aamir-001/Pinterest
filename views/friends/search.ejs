@@ -1,0 +1,80 @@
+<div class="friends-header">
+    <div class="friends-title">
+        <h2>Find Friends</h2>
+        <p>Search for users to connect with</p>
+    </div>
+    <div class="friends-actions">
+        <a href="/friends" class="back-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+            Back to Friends
+        </a>
+    </div>
+</div>
+
+<div class="search-header">
+    <form action="/friends/search" method="GET" class="search-form">
+        <input type="text" name="q" value="<%= query %>" class="search-input" placeholder="Search for users by username or name...">
+        <button type="submit" class="search-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+        </button>
+    </form>
+</div>
+
+<% if (error) { %>
+    <div class="error-message">
+        <p><%= error %></p>
+    </div>
+<% } else if (results && results.length > 0) { %>
+    <h3 class="section-title">Search Results for "<%= query %>"</h3>
+    
+    <div class="users-list">
+        <% results.forEach(user => { %>
+            <div class="user-card">
+                <div class="user-info">
+                    <div class="user-avatar">
+                        <% if (user.profile_picture_url) { %>
+                            <img src="<%= user.profile_picture_url %>" alt="<%= user.username %>" class="avatar-img">
+                        <% } else { %>
+                            <div class="avatar-placeholder">
+                                <%= user.username.charAt(0).toUpperCase() %>
+                            </div>
+                        <% } %>
+                    </div>
+                    
+                    <div class="user-details">
+                        <h4 class="user-name"><%= user.display_name || user.username %></h4>
+                        <p class="user-username">@<%= user.username %></p>
+                    </div>
+                </div>
+                
+                <div class="user-actions">
+                    <% if (!user.friendship_status) { %>
+                        <form action="/friends/request" method="POST">
+                            <input type="hidden" name="recipient_id" value="<%= user.user_id %>">
+                            <button type="submit" class="btn-add-friend">Add Friend</button>
+                        </form>
+                    <% } else if (user.friendship_status === 'pending') { %>
+                        <span class="friend-status pending">Request Pending</span>
+                    <% } else if (user.friendship_status === 'accepted') { %>
+                        <span class="friend-status accepted">Already Friends</span>
+                    <% } %>
+                </div>
+            </div>
+        <% }); %>
+    </div>
+<% } else if (query) { %>
+    <div class="no-results">
+        <h3>No users found for "<%= query %>"</h3>
+        <p>Try searching with a different name or username</p>
+    </div>
+<% } else { %>
+    <div class="search-empty">
+        <h3>Search for users to connect with</h3>
+        <p>Enter a username or name to find people on Pinboard</p>
+    </div>
+<% } %>
