@@ -82,16 +82,16 @@
         <div class="modal-header">
             <span class="close-modal" id="closePinDetailModal">&times;</span>
         </div>
-        
+
         <div class="pin-detail-content">
             <div class="pin-detail-image-container">
                 <img id="pinDetailImage" src="" alt="Pin Detail" class="pin-detail-image">
             </div>
-            
+
             <div class="pin-detail-info">
                 <div class="pin-detail-info-content">
                     <h3 id="pinDetailDescription" class="pin-detail-title"></h3>
-                    
+
                     <div class="pin-detail-meta">
                         <button id="likeButton" class="like-button">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="like-icon">
@@ -99,8 +99,16 @@
                             </svg>
                             <span id="likeCount">0</span> likes
                         </button>
+
+                        <!-- Add Repin Button -->
+                        <button id="repinButton" class="repin-button">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="repin-icon">
+                                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+                            </svg>
+                            Repin
+                        </button>
                     </div>
-                    
+
                     <div class="comments-section">
                         <h4>Comments</h4>
                         <div id="commentsContainer" class="comments-container">
@@ -108,7 +116,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="comment-form-container">
                     <form id="commentForm" class="comment-form">
                         <input type="hidden" id="pinIdInput" name="pin_id" value="">
@@ -118,6 +126,37 @@
                 </div>
             </div>
         </div>
+    </div>
+</div>
+
+<!-- Repin Modal -->
+<div id="repinModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Save to board</h3>
+            <span class="close-modal" id="closeRepinModal">&times;</span>
+        </div>
+
+        <form id="repinForm" action="/pins/repin" method="POST">
+            <input type="hidden" id="repinPinId" name="pin_id" value="">
+
+            <div class="form-group">
+                <label for="repinBoard">Choose a board</label>
+                <select id="repinBoard" name="board_id" class="form-control" required>
+                    <!-- Boards will be loaded dynamically -->
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="repinDescription">Description (optional)</label>
+                <textarea id="repinDescription" name="description" class="form-control" rows="3" placeholder="Tell people what this pin is about..."></textarea>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="btn-cancel" onclick="closeRepinModal()">Cancel</button>
+                <button type="submit" class="btn-create">Save</button>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -439,4 +478,182 @@ document.getElementById('likeButton').addEventListener('click', function() {
         submitBtn.disabled = !this.value.trim();
     });
     // -----------------------------------------------------------------
+
+    // Repin Modal Functionality
+    const repinModal = document.getElementById('repinModal');
+    const repinButton = document.getElementById('repinButton');
+    const closeRepinModalBtn = document.getElementById('closeRepinModal');
+    const repinPinId = document.getElementById('repinPinId');
+    const repinBoard = document.getElementById('repinBoard');
+    const repinForm = document.getElementById('repinForm');
+
+    // Open repin modal when clicking repin button
+    repinButton.addEventListener('click', function() {
+        const pinId = document.getElementById('pinIdInput').value;
+        repinPinId.value = pinId;
+
+        // Load user's boards for selection
+        loadUserBoards()
+            .then(() => {
+                repinModal.style.display = 'block';
+                document.body.style.overflow = 'hidden'; // Prevent scrolling
+            })
+            .catch(error => {
+                console.error('Error loading user boards:', error);
+                alert('Failed to load your boards. Please try again.');
+            });
+    });
+
+    // Close repin modal
+    closeRepinModalBtn.addEventListener('click', function() {
+        closeRepinModal();
+    });
+
+    // Close modal when clicking outside
+    window.addEventListener('click', function(event) {
+        if (event.target == repinModal) {
+            closeRepinModal();
+        }
+    });
+
+    // Function to close repin modal
+    function closeRepinModal() {
+        repinModal.style.display = 'none';
+        document.body.style.overflow = 'auto'; // Re-enable scrolling
+    }
+
+    // Function to load user's boards
+    async function loadUserBoards() {
+        try {
+            console.log('Fetching user boards...');
+
+            const response = await fetch('/boards/user-boards', {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'same-origin' // Important for sending cookies with the request
+            });
+
+            console.log('User boards response:', response);
+
+            if (!response.ok) {
+                console.error('Error response:', response.status, response.statusText);
+                const text = await response.text();
+                console.error('Response body:', text);
+                throw new Error(`Server returned ${response.status}: ${text}`);
+            }
+
+            console.log('User boards response:', response);
+
+            const data = await response.json();
+            console.log('User boards data:', data);
+
+            // Clear previous options
+            repinBoard.innerHTML = '';
+
+            // Remove previous no-boards message if exists
+            const prevMessage = repinForm.querySelector('.no-boards-message');
+            if (prevMessage) {
+                prevMessage.remove();
+            }
+
+            if (data.success && data.boards && data.boards.length > 0) {
+                // Populate select with user's boards
+                data.boards.forEach(board => {
+                    const option = document.createElement('option');
+                    option.value = board.board_id;
+                    option.textContent = board.board_name;
+                    repinBoard.appendChild(option);
+                });
+                console.log('Successfully loaded', data.boards.length, 'boards');
+            } else {
+                // No boards found or error in response
+                console.log('No boards found or error in response:', data);
+                repinBoard.innerHTML = '<option value="" disabled selected>You need to create a board first</option>';
+
+                // Show message and link to create a board
+                const noBoards = document.createElement('div');
+                noBoards.className = 'no-boards-message';
+                noBoards.innerHTML = `
+                <p>You don't have any boards yet.</p>
+                <a href="#" class="create-board-link" id="createBoardLink">Create a board</a>
+            `;
+
+                repinForm.insertBefore(noBoards, repinForm.querySelector('.form-actions'));
+
+                // Add event listener to create board link
+                document.getElementById('createBoardLink').addEventListener('click', function(e) {
+                    e.preventDefault();
+                    closeRepinModal();
+
+                    // Open create board modal if it exists
+                    const createBoardModal = document.getElementById('createBoardModal');
+                    if (createBoardModal) {
+                        createBoardModal.style.display = 'block';
+                        document.body.style.overflow = 'hidden';
+                    } else {
+                        // Redirect to library page if modal doesn't exist
+                        window.location.href = '/library';
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('Error fetching user boards:', error);
+            // Add a more descriptive error message
+            alert('Failed to load your boards. Please try again. Error: ' + error.message);
+            throw error;
+        }
+    }
+
+    // Handle repin form submission
+    repinForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        // Check if board is selected
+        if (!repinBoard.value) {
+            alert('Please select a board to repin to');
+            return;
+        }
+
+        try {
+            const formData = new FormData(repinForm);
+            const response = await fetch('/pins/repin', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    pin_id: formData.get('pin_id'),
+                    board_id: formData.get('board_id'),
+                    description: formData.get('description')
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                // Close the modal
+                closeRepinModal();
+
+                // Show success message
+                const successMessage = document.createElement('div');
+                successMessage.className = 'repin-success-message';
+                successMessage.textContent = 'Pin saved to your board!';
+                document.body.appendChild(successMessage);
+
+                // Remove success message after 3 seconds
+                setTimeout(() => {
+                    document.body.removeChild(successMessage);
+                }, 3000);
+            } else {
+                alert('Error repinning: ' + result.message);
+            }
+        } catch (error) {
+            console.error('Error repinning:', error);
+            alert('Failed to repin. Please try again.');
+        }
+    });
 </script>

@@ -3,6 +3,7 @@ const router = express.Router();
 const { ensureAuthenticated } = require('../config/auth');
 const pool = require('../db');
 const { getBoardPins } = require('../services/pinboardService');
+const { getUserBoards } = require('../services/libraryBoardManagementFunctions');
 
 // Create a new board (POST)
 router.post('/create', ensureAuthenticated, async (req, res) => {
@@ -25,6 +26,37 @@ router.post('/create', ensureAuthenticated, async (req, res) => {
         console.error('Error creating board:', error);
         req.flash('error_msg', 'Failed to create board');
         res.redirect('/library');
+    }
+});
+
+// API endpoint to get user's boards for repin functionality
+router.get('/user-boards', ensureAuthenticated, async (req, res) => {
+    try {
+        console.log('User boards API called. User ID:', req.user.user_id);
+
+        // Use the existing getUserBoards function
+        const result = await getUserBoards(req.user.user_id);
+
+        console.log('Found boards:', result.boards ? result.boards.length : 0);
+
+        // Set the content type explicitly
+        res.setHeader('Content-Type', 'application/json');
+
+        return res.json({
+            success: result.success,
+            boards: result.success ? result.boards : [],
+            message: result.success ? null : result.message
+        });
+    } catch (error) {
+        console.error('Error fetching user boards:', error);
+
+        // Set the content type explicitly
+        res.setHeader('Content-Type', 'application/json');
+
+        return res.status(500).json({
+            success: false,
+            message: 'Failed to fetch boards: ' + error.message
+        });
     }
 });
 
@@ -54,6 +86,5 @@ router.get('/:boardId', ensureAuthenticated, async (req, res) => {
         res.redirect('/library');
     }
 });
-
 
 module.exports = router;

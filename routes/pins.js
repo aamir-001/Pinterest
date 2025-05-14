@@ -4,7 +4,7 @@ const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
 const { ensureAuthenticated } = require('../config/auth');
-const { pinPicture } = require('../services/pinboardService');
+const { pinPicture, repinPicture } = require('../services/pinboardService');
 const pool = require('../db');
 const { likePicture, unlikePicture, addComment, getComments } = require('../services/likesAndCommentsFunctions');
 
@@ -246,6 +246,77 @@ router.post('/comment', ensureAuthenticated, async (req, res) => {
             success: false,
             message: 'Failed to add comment'
         });
+    }
+});
+
+// Handle repin requests
+router.post('/repin', ensureAuthenticated, async (req, res) => {
+    try {
+        const { pin_id, board_id, description } = req.body;
+
+        if (!pin_id || !board_id) {
+            return res.status(400).json({
+                success: false,
+                message: 'Missing required pin_id or board_id'
+            });
+        }
+
+        // Check if board belongs to the current user
+        const boardResult = await pool.query(
+            'SELECT user_id FROM Boards WHERE board_id = $1',
+            [board_id]
+        );
+
+        if (boardResult.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'Board not found'
+            });
+        }
+
+        if (boardResult.rows[0].user_id !== req.user.user_id) {
+            return res.status(403).json({
+                success: false,
+                message: 'You can only repin to your own boards'
+            });
+        }
+
+        // Call the repinPicture service
+        const result = await repinPicture(
+            req.user.user_id,
+            pin_id,
+            board_id,
+            description || ''
+        );
+
+        if (result.success) {
+            if (req.xhr || req.headers.accept.indexOf('json') > -1) {
+                // If it's an AJAX request, return JSON
+                return res.json(result);
+            } else {
+                // If it's a regular form submission, redirect
+                req.flash('success_msg', 'Pin repinned successfully!');
+                return res.redirect(`/boards/${board_id}`);
+            }
+        } else {
+            if (req.xhr || req.headers.accept.indexOf('json') > -1) {
+                return res.status(400).json(result);
+            } else {
+                req.flash('error_msg', result.message);
+                return res.redirect('back');
+            }
+        }
+    } catch (error) {
+        console.error('Error repinning picture:', error);
+        if (req.xhr || req.headers.accept.indexOf('json') > -1) {
+            return res.status(500).json({
+                success: false,
+                message: 'Failed to repin picture'
+            });
+        } else {
+            req.flash('error_msg', 'Failed to repin picture');
+            return res.redirect('back');
+        }
     }
 });
 module.exports = router;
