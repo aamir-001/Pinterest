@@ -7,6 +7,7 @@
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M19 12H5M12 19l-7-7 7-7"/>
                     </svg>
+                    </svg>
                     Back to Friends
                 </a>
             </div>
@@ -36,9 +37,36 @@
     <div class="friend-boards-section">
         <h3 class="boards-title"><%= friend.username %>'s Boards</h3>
 
-        <div class="boards-grid">
-            <!-- Your existing board cards code -->
-        </div>
+        <% if (boards && boards.length > 0) { %>
+            <div class="boards-grid">
+                <% boards.forEach(board => { %>
+                    <a href="/boards/<%= board.board_id %>" class="board-card-link">
+                        <div class="board-card">
+                            <div class="board-thumbnail">
+                                <span class="board-thumbnail-icon">📁</span>
+                            </div>
+                            <div class="board-info">
+                                <h4 class="board-name"><%= board.board_name %></h4>
+                                <div class="board-meta">
+                                    <span><%= board.pin_count || 0 %> pins</span>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                <% }); %>
+            </div>
+        <% } else { %>
+            <div class="empty-boards">
+                <h3><%= friend.username %> doesn't have any boards yet</h3>
+                <p>When they create boards, you'll see them here</p>
+            </div>
+        <% } %>
+
+        <% if (error) { %>
+            <div class="error-message">
+                <p><%= error %></p>
+            </div>
+        <% } %>
     </div>
 </div>
 
